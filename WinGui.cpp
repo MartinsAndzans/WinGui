@@ -66,9 +66,9 @@ VOID _fastcall WinGui::BroadcastMessages(VOID) noexcept {
 	
 	MSG Msg = { 0 };
 
-	while (GetMessage(&Msg, NULL, 0, 0) > 0) { // Get Message From Message Queue
-		TranslateMessage(&Msg); // Translate Keyboard Message
-		DispatchMessage(&Msg); // Call Window Procedure
+	while (GetMessage(&Msg, NULL, 0, 0) > 0) { // # Get Message From Message Queue #
+		TranslateMessage(&Msg); // # Translate Keyboard Message #
+		DispatchMessage(&Msg); // # Call Window Procedure #
 	}
 
 }
@@ -210,7 +210,16 @@ LRESULT CALLBACK WinGui::WindowProcedure(HWND hMainWindow, UINT Msg, WPARAM wPar
 		GetTextExtentPoint32A(WindowDC, LabelText.c_str(), static_cast<INT>(LabelText.length()), &TextSizePx);
 		TextOutA(WindowDC, WindowDimensions.right / 2 - TextSizePx.cx / 2, WindowDimensions.bottom / 2 - TextSizePx.cy / 2, LabelText.c_str(), static_cast<INT>(LabelText.length()));
 
-		Gdi::DrawCircle(WindowDC, { WindowDimensions.right / 2, WindowDimensions.bottom / 2 }, 100U);
+		CONST LONG Width = 200L;
+		CONST LONG Height = 140L;
+
+		GDI_TRIANGLE triangle = {
+			{ WindowDimensions.left + Width / 2, WindowDimensions.top },
+			{ WindowDimensions.left, WindowDimensions.top + Height },
+			{ WindowDimensions.left + Width, WindowDimensions.top + Height }
+		};
+
+		GdiPlus::DrawCircle(WindowDC, { WindowDimensions.right / 2, WindowDimensions.bottom / 2 }, 200U, 26U);
 		
 		EndPaint(hMainWindow, &ps);
 		return 0;

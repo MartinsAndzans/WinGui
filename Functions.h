@@ -11,7 +11,8 @@
 #include <string>
 #include <fstream>
 
-class functions {
+class Functions {
+public:
 
 	/// <summary>
 	/// Converts Integer To Char Array
@@ -143,71 +144,54 @@ class functions {
 
 	}
 
-	/// <summary>
-	/// This Function Finds Character Position Into String
-	/// </summary>
-	/// <param name="Text">Text</param>
-	/// <param name="Char">Character To Find</param>
-	/// <param name="TextLength">Text Length In Characters</param>
+	/// <summary>This function finds character position in string</summary>
 	/// <returns>
-	/// If Character has been found Function Returns Character Position,
-	/// <para>but If Character not found Function Returns MAXSIZE_T Value</para>
+	/// If character has been found function returns character position,
+	/// <para>but if character not found function returns MAXSIZE_T value</para>
 	/// </returns>
-	static SIZE_T FindChar(LPCSTR Text, CONST CHAR Char, SIZE_T TextLength) noexcept {
+	static size_t FindChar(LPCSTR Text, CONST CHAR Char, SIZE_T TextLength) noexcept {
 		
-		for (SIZE_T I = 0; I < TextLength; I++) {
+		for (size_t I = 0; I < TextLength; I++) {
 			if (Text[I] == Char) {
 				return I;
 			}
 		}
 
-		return static_cast<SIZE_T>(-1);
+		return MAXSIZE_T;
 
 	}
 
-	/// <summary>
-	/// This Function Finds Unicode Character Position Into Unicode String
-	/// </summary>
-	/// <param name="UText">Unicode Text</param>
-	/// <param name="UChar">Unicode Character To Find</param>
-	/// <param name="UTextLength">Unicode Text Length In Characters</param>
+	/// <summary>This function finds unicode character position in unicode string</summary>
 	/// <returns>
-	/// If Unicode Character has been found Function Returns Unicode Character Position,
-	/// <para>but If Character not found Function Returns MAXSIZE_T Value</para>
+	/// If unicode character has been found function returns unicode character position,
+	/// <para>but if character not found function returns MAXSIZE_T value</para>
 	/// </returns>
-	static SIZE_T FindChar(LPCWSTR UText, CONST WCHAR UChar, SIZE_T UTextLength) noexcept {
+	static size_t FindChar(LPCWSTR UText, CONST WCHAR UChar, SIZE_T UTextLength) noexcept {
 
-		for (SIZE_T I = 0; I < UTextLength; I++) {
+		for (size_t I = 0; I < UTextLength; I++) {
 			if (UText[I] == UChar) {
 				return I;
 			}
 		}
 
-		return static_cast<SIZE_T>(-1);
+		return MAXSIZE_T;
 
 	}
 
-	/// <summary>
-	/// This Function Rounds Double String
-	/// </summary>
-	/// <param name="DoubleString">Double String</param>
-	/// <returns>Rounded Double String</returns>
 	static std::string RoundDoubleString(std::string DoubleString) noexcept {
 
-		if (DoubleString.find('.') != std::string::npos) {
+		if (DoubleString.find('.') == std::string::npos) {
+			return DoubleString;
+		}
 
-			while (DoubleString.ends_with('0') or DoubleString.ends_with('.')) {
+		while (DoubleString.ends_with('0') or DoubleString.ends_with('.')) {
 
-				if (DoubleString.ends_with('.')) {
-					DoubleString.pop_back();
-					return DoubleString;
-				}
-
+			if (DoubleString.ends_with('.')) {
 				DoubleString.pop_back();
-
+				return DoubleString;
 			}
 
-			return DoubleString;
+			DoubleString.pop_back();
 
 		}
 
@@ -215,180 +199,166 @@ class functions {
 
 	}
 
-	/// <summary>
-	/// This Function Copy Text To Clipboard
-	/// </summary>
-	/// <param name="NewClipboardOwner">New Clipboard Owner</param>
-	/// <param name="Text">Text To Clipboard</param>
-	/// <returns>If Function Succeeded Returns TRUE, but If not Returns FALSE</returns>
-	static BOOL CopyTextToClipboard(HWND NewClipboardOwner, const std::string &Text) noexcept {
+	/// <returns>If succeeded returns true, but if not returns false</returns>
+	static bool CopyTextToClipboard(HWND NewClipboardOwner, const std::string &Text) noexcept {
 
-		if (Text.length() != 0) {
-
-			if (OpenClipboard(NewClipboardOwner)) {
-				EmptyClipboard();
-				HLOCAL CopyData = LocalAlloc(LPTR | LMEM_VALID_FLAGS, sizeof(CHAR) * (Text.length() + 1));
-				if (CopyData == NULL) {
-					CloseClipboard();
-					return FALSE;
-				}
-				void *CopyDataPtr = LocalLock(CopyData);
-				if (CopyDataPtr == nullptr) {
-					LocalFree(CopyData);
-					CloseClipboard();
-					return FALSE;
-				}
-				memcpy(CopyDataPtr, static_cast<const void*>(Text.c_str()), sizeof(CHAR) * (Text.length() + 1));
-				SetClipboardData(CF_TEXT, CopyData);
-				LocalUnlock(CopyData);
-				LocalFree(CopyData);
-				CloseClipboard();
-				return TRUE;
-
-			}
-
+		if (Text.length() == 0) {
+			return false;
 		}
-
-		return FALSE;
-
-	}
-
-	/// <summary>
-	/// This Function Copy Unicode Text To Clipboard
-	/// </summary>
-	/// <param name="NewClipboardOwner">New Clipboard Owner</param>
-	/// <param name="UText">Unicode Text To Clipboard</param>
-	/// <returns>If Function Succeeded Returns TRUE, but If not Returns FALSE</returns>
-	static BOOL CopyTextToClipboard(HWND NewClipboardOwner, const std::wstring &UText) noexcept {
-
-		if (UText.length() != 0) {
-			if (OpenClipboard(NewClipboardOwner)) {
-				EmptyClipboard();
-				HLOCAL CopyData = LocalAlloc(LPTR | LMEM_VALID_FLAGS, sizeof(WCHAR) * (UText.length() + 1));
-				if (CopyData == NULL) {
-					CloseClipboard();
-					return FALSE;
-				}
-				void *CopyDataPtr = LocalLock(CopyData);
-				if (CopyDataPtr == nullptr) {
-					LocalFree(CopyData);
-					CloseClipboard();
-					return FALSE;
-				}
-				memcpy(CopyDataPtr, static_cast<const void*>(UText.c_str()), sizeof(WCHAR) * (UText.length() + 1));
-				SetClipboardData(CF_UNICODETEXT, CopyData);
-				LocalUnlock(CopyData);
-				LocalFree(CopyData);
-				CloseClipboard();
-				return TRUE;
-
-			}
-
-		}
-
-		return FALSE;
-
-	}
-
-	/// <summary>
-	/// This Function Gets Text From Clipboard
-	/// </summary>
-	/// <param name="NewClipboardOwner">New Clipboard Owner</param>
-	/// <param name="Buffer">Text From Clipboard</param>
-	/// <returns>If Function Succeeded Returns TRUE, but If not Returns FALSE</returns>
-	static BOOL GetTextFromClipboard(HWND NewClipboardOwner, std::string &Buffer) noexcept {
 
 		if (OpenClipboard(NewClipboardOwner)) {
-			HLOCAL ClipboardData = GetClipboardData(CF_TEXT);
-			if (ClipboardData == NULL) {
-				CloseClipboard();
-				return FALSE;
-			}
-			void *ClipboardDataPtr = LocalLock(ClipboardData);
-			if (ClipboardDataPtr == nullptr) {
-				LocalFree(ClipboardData);
-				CloseClipboard();
-				return FALSE;
-			}
-			Buffer += static_cast<char*>(ClipboardDataPtr);
-			LocalUnlock(ClipboardData);
-			LocalFree(ClipboardData);
-			CloseClipboard();
-			return TRUE;
+			return false;
 		}
 
-		return FALSE;
+		EmptyClipboard();
+		HLOCAL CopyData = LocalAlloc(LPTR | LMEM_VALID_FLAGS, sizeof(CHAR) * (Text.length() + 1));
+
+		if (CopyData == NULL) {
+			CloseClipboard();
+			return false;
+		}
+
+		void *lpCopyData = LocalLock(CopyData);
+
+		if (lpCopyData == nullptr) {
+			LocalFree(CopyData);
+			CloseClipboard();
+			return false;
+		}
+
+		memcpy(lpCopyData, static_cast<const void*>(Text.c_str()), sizeof(CHAR) * (Text.length() + 1));
+		SetClipboardData(CF_TEXT, CopyData);
+		LocalUnlock(CopyData);
+		LocalFree(CopyData);
+		CloseClipboard();
+		return true;
 
 	}
 
-	/// <summary>
-	/// This Function Gets Unicode Text From Clipboard
-	/// </summary>
-	/// <param name="NewClipboardOwner">New Clipboard Owner</param>
-	/// <param name="UBuffer">Unicode Text From Clipboard</param>
-	/// <returns>If Function Succeeded Returns TRUE, but If not Returns FALSE</returns>
-	static BOOL GetTextFromClipboard(HWND NewClipboardOwner, std::wstring &UBuffer) noexcept {
+	/// <returns>If succeeded returns true, but if not returns false</returns>
+	static bool CopyTextToClipboard(HWND NewClipboardOwner, const std::wstring &UText) noexcept {
+
+		if (UText.length() == 0) {
+			return false;
+		}
 
 		if (OpenClipboard(NewClipboardOwner)) {
-			HLOCAL ClipboardData = GetClipboardData(CF_UNICODETEXT);
-			if (ClipboardData == NULL) {
-				CloseClipboard();
-				return FALSE;
-			}
-			void *ClipboardDataPtr = LocalLock(ClipboardData);
-			if (ClipboardDataPtr == nullptr) {
-				LocalFree(ClipboardData);
-				CloseClipboard();
-				return FALSE;
-			}
-			UBuffer += static_cast<wchar_t*>(ClipboardDataPtr);
-			LocalUnlock(ClipboardData);
-			LocalFree(ClipboardData);
-			CloseClipboard();
-			return TRUE;
+			return false;
 		}
 
-		return FALSE;
+		EmptyClipboard();
+		HLOCAL CopyData = LocalAlloc(LPTR | LMEM_VALID_FLAGS, sizeof(WCHAR) * (UText.length() + 1));
+
+		if (CopyData == NULL) {
+			CloseClipboard();
+			return false;
+		}
+
+		void* lpCopyData = LocalLock(CopyData);
+
+		if (lpCopyData == nullptr) {
+			LocalFree(CopyData);
+			CloseClipboard();
+			return false;
+		}
+
+		memcpy(lpCopyData, static_cast<const void*>(UText.c_str()), sizeof(WCHAR) * (UText.length() + 1));
+		SetClipboardData(CF_UNICODETEXT, CopyData);
+		LocalUnlock(CopyData);
+		LocalFree(CopyData);
+		CloseClipboard();
+		return true;
 
 	}
 
-	/// <summary>
-	/// Shows Last Error Message
-	/// </summary>
-	/// <param name="ParentWindow">Parent Window</param>
-	/// <param name="AdditionalErroMessage">Additional Error Message</param>
-	static VOID ShowLastError(HWND ParentWindow = HWND_DESKTOP, std::string AdditionalErrorMessage = " - Additional Error Message") noexcept {
-		std::string ErrorMessage = "ERROR " + std::to_string(GetLastError()) + AdditionalErrorMessage;
-		MessageBoxA(ParentWindow, ErrorMessage.c_str(), "-ERROR-", MB_OK | MB_ICONERROR);
+	/// <returns>If succeeded returns true, but if not returns false</returns>
+	static bool GetTextFromClipboard(HWND NewClipboardOwner, std::string &Buffer) noexcept {
+
+		if (!OpenClipboard(NewClipboardOwner)) {
+			return false;
+		}
+
+		HLOCAL ClipboardData = GetClipboardData(CF_TEXT);
+
+		if (ClipboardData == NULL) {
+			CloseClipboard();
+			return false;
+		}
+
+		char *lpClipboardData = reinterpret_cast<char*>(LocalLock(ClipboardData));
+
+		if (lpClipboardData == nullptr) {
+			LocalFree(ClipboardData);
+			CloseClipboard();
+			return false;
+		}
+
+		Buffer += lpClipboardData;
+		LocalUnlock(ClipboardData);
+		LocalFree(ClipboardData);
+		CloseClipboard();
+		return true;
+
 	}
 
-	/// <summary>
-	/// Saves Bitmap To File
-	/// </summary>
-	/// <param name="Bitmap">Bitmap</param>
-	/// <param name="FilePath">File Path With ".bmp" Extension</param>
-	/// <param name="BitmapSize">Bitmap Size In Pixels</param>
-	/// <returns>If Succeeded Returns TRUE, but If not Returns FALSE</returns>
-	static BOOL SaveBitmapToFile(HBITMAP Bitmap, LPCSTR FilePath, CONST SIZE &BitmapSize) noexcept {
+	/// <returns>If succeeded returns true, but if not returns false</returns>
+	static bool GetTextFromClipboard(HWND NewClipboardOwner, std::wstring &UBuffer) noexcept {
+
+		if (!OpenClipboard(NewClipboardOwner)) {
+			return false;
+		}
+
+		HLOCAL ClipboardData = GetClipboardData(CF_UNICODETEXT);
+
+		if (ClipboardData == NULL) {
+			CloseClipboard();
+			return false;
+		}
+
+		wchar_t *lpClipboardData = reinterpret_cast<wchar_t*>(LocalLock(ClipboardData));
+
+		if (lpClipboardData == nullptr) {
+			LocalFree(ClipboardData);
+			CloseClipboard();
+			return false;
+		}
+
+		UBuffer += lpClipboardData;
+		LocalUnlock(ClipboardData);
+		LocalFree(ClipboardData);
+		CloseClipboard();
+		return true;
+
+	}
+
+	static void ShowLastError(HWND OwnerWindow = HWND_DESKTOP, std::string AdditionalErrorMessage = "Additional Error Message") noexcept {
+		std::string ErrorMessage = "ERROR " + std::to_string(GetLastError()) + " - " + AdditionalErrorMessage;
+		MessageBoxA(OwnerWindow, ErrorMessage.c_str(), "-ERROR-", MB_OK | MB_ICONERROR);
+	}
+
+	/// <param name="FilePath">File path with ".bmp" extension</param>
+	/// <param name="BitmapSize">Bitmap size in pixels</param>
+	/// <returns>If succeeded returns true, but if not returns false</returns>
+	static bool SaveBitmapToFile(HBITMAP Bitmap, LPCSTR FilePath, SIZE BitmapSize) noexcept {
 
 		std::ofstream image;
 
-		CONST WORD BM = 0x4D42; // ASCII 'B' = 66 / 0x42 | 'M' = 77 / 0x4D
-		CONST DWORD BitmapSizeCXxCY = BitmapSize.cx * BitmapSize.cy; // Bitmap Size [cx * cy]
+		CONST WORD BM = 0x4D42; // * ASCII 'B' = 0x42 / 'M' = 0x4D *
+		CONST DWORD BitmapSizeCXxCY = BitmapSize.cx * BitmapSize.cy; // * Bitmap Size [cx x cy] *
 
 		BITMAPFILEHEADER bmfheader = { 0 };
 		bmfheader.bfType = BM;
-		bmfheader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + sizeof(COLORREF) * BitmapSizeCXxCY; // File Size
-		bmfheader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER); // Offset To Color Bits
-		bmfheader.bfReserved1 = NULL;
-		bmfheader.bfReserved2 = NULL;
+		bmfheader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + sizeof(COLORREF) * BitmapSizeCXxCY; // # File size #
+		bmfheader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER); // # Offset to color bits #
+		bmfheader.bfReserved1 = 0x0000;
+		bmfheader.bfReserved2 = 0x0000;
 
 		BITMAPINFOHEADER bmiheader = { 0 };
 		bmiheader.biSize = sizeof(BITMAPINFOHEADER);
-		bmiheader.biWidth = BitmapSize.cx; // Bitmap Width In Pixels
-		bmiheader.biHeight = BitmapSize.cy; // Bitmap Height In Pixels
-		bmiheader.biPlanes = 0x01; // 1 - Bitmap has a one plane
-		bmiheader.biBitCount = 0x20; // 32 - Bitmap has a maximum of 2^32 colors
+		bmiheader.biWidth = BitmapSize.cx; // # Bitmap width in pixels #
+		bmiheader.biHeight = BitmapSize.cy; // # Bitmap height in pixels #
+		bmiheader.biPlanes = 0x01; // # Bitmap has a one plane #
+		bmiheader.biBitCount = 0x20; // # Bitmap has a maximum of 2^32 colors #
 		bmiheader.biCompression = BI_RGB;
 		bmiheader.biSizeImage = BitmapSizeCXxCY;
 		bmiheader.biXPelsPerMeter = BitmapSize.cx;
@@ -396,32 +366,32 @@ class functions {
 		bmiheader.biClrUsed = NULL;
 		bmiheader.biClrImportant = NULL;
 
-		std::unique_ptr<COLORREF[]> BitmapBytesPtr = std::make_unique<COLORREF[]>(BitmapSizeCXxCY);
+		std::unique_ptr<COLORREF[]> lpBitmapBytes = std::make_unique<COLORREF[]>(BitmapSizeCXxCY);
 
-		if (!BitmapBytesPtr) {
-			return FALSE;
+		if (!lpBitmapBytes) {
+			return false;
 		}
 
 		BITMAPINFO bminfo = { 0 };
 		bminfo.bmiHeader = bmiheader;
 
 		HDC ScreenDC = GetDC(HWND_DESKTOP);
-		GetDIBits(ScreenDC, Bitmap, 0, BitmapSize.cy, BitmapBytesPtr.get(), &bminfo, DIB_RGB_COLORS);
+		GetDIBits(ScreenDC, Bitmap, 0, BitmapSize.cy, lpBitmapBytes.get(), &bminfo, DIB_RGB_COLORS);
 		ReleaseDC(HWND_DESKTOP, ScreenDC);
 
-		image.open(FilePath, std::ios::binary); // Open File
+		image.open(FilePath, std::ios::binary);
 
 		if (!image.is_open()) {
-			return FALSE;
+			return false;
 		}
 
-		image.write(reinterpret_cast<const char*>(&bmfheader), sizeof(BITMAPFILEHEADER)); // BITMAP FILE HEADER
-		image.write(reinterpret_cast<const char*>(&bmiheader), sizeof(BITMAPINFOHEADER)); // BITMAP INFO HEADER
-		image.write(reinterpret_cast<const char*>(BitmapBytesPtr.get()), sizeof(COLORREF) * BitmapSizeCXxCY); // COLOR BYTE ARRAY
+		image.write(reinterpret_cast<const char*>(&bmfheader), sizeof(BITMAPFILEHEADER)); // # BITMAP FILE HEADER #
+		image.write(reinterpret_cast<const char*>(&bmiheader), sizeof(BITMAPINFOHEADER)); // # BITMAP INFO HEADER #
+		image.write(reinterpret_cast<const char*>(lpBitmapBytes.get()), sizeof(COLORREF) * BitmapSizeCXxCY); // # COLOR BYTE ARRAY #
 
-		image.close(); // Close File
+		image.close();
 
-		return TRUE;
+		return true;
 
 	}
 

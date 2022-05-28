@@ -160,7 +160,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Functions.h" />
-    <ClInclude Include="Gdi.h" />
+    <ClInclude Include="GdiPlus.h" />
     <ClInclude Include="Graphics.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="WinGui.h" />

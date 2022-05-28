@@ -1,17 +1,16 @@
-#ifndef _WIN_GUI_
-#define _WIN_GUI_
+#pragma once
 
 #include <ciso646>
-#include <d2d1.h>
 #include <Windows.h>
+#include <d2d1.h>
 #include <string>
 #include <vector>
 
 #include "resource.h"
 
-#include "Functions.h"
-#include "Gdi.h"
+#include "GdiPlus.h"
 #include "Graphics.h"
+#include "Functions.h"
 
 class WinGui {
 private:
@@ -28,10 +27,14 @@ private:
 
 public:
 
-	// # Create Main Window #
+	/// <summary>
+	/// # Create Main Window #
+	/// </summary>
 	static BOOL _fastcall CreateMainWindow(LPCWSTR WindowTitle) noexcept;
 
-	// # Main Message Loop #
+	/// <summary>
+	/// # Main Message Loop #
+	/// </summary>
 	static VOID _fastcall BroadcastMessages(VOID) noexcept;
 
 private:
@@ -41,9 +44,7 @@ private:
 
 };
 
-#endif // _WIN_GUI_
-
-struct listbox {
+class ListBox {
 
 private:
 
@@ -54,8 +55,8 @@ protected:
 
 	const uint32_t _MAX_ITEM_COUNT_ = 32767U;
 
-	listbox(HWND parent_window, USHORT id) noexcept {
-		_hListBox = CreateWindowExA(WS_EX_CLIENTEDGE, "listbox", "",
+	ListBox(HWND parent_window, uint16_t id) noexcept {
+		_hListBox = CreateWindowEx(WS_EX_CLIENTEDGE, L"listbox", L"",
 			WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOINTEGRALHEIGHT,
 			0, 0, 0, 0,
 			parent_window,
@@ -96,8 +97,8 @@ protected:
 		return FALSE;
 	}
 
-#define ListBox_GetItemData(hwnd, index) SendMessage(hwnd, LB_GETITEMDATA, static_cast<WPARAM>(index), NULL) // Return Value is Value Associated With that Item
-#define ListBox_FindString(hwnd, string) SendMessage(hwnd, LB_FINDSTRING, static_cast<WPARAM>(-1), static_cast<LPARAM>(string)) // Return Value is String Index
-#define ListBox_SetTopItem(hwnd, index) SendMessage(hwnd, LB_SETTOPINDEX, static_cast<WPARAM>(index), NULL)
+	// ListBox_GetItemData(hwnd, index) SendMessage(hwnd, LB_GETITEMDATA, static_cast<WPARAM>(index), NULL) // Return Value is Value Associated With that Item
+	// ListBox_FindString(hwnd, string) SendMessage(hwnd, LB_FINDSTRING, static_cast<WPARAM>(-1), static_cast<LPARAM>(string)) // Return Value is String Index
+	// ListBox_SetTopItem(hwnd, index) SendMessage(hwnd, LB_SETTOPINDEX, static_cast<WPARAM>(index), NULL)
 
 };
