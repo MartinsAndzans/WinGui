@@ -1,2 +1,7 @@
-<h1>WinGui</h1>
-<h2>Windows Desktop Aplication</h2>
+# WinGui
+
+## Description
+### Windows Desktop Aplication
+
+## License
+### [Mit License](LICENSE)
