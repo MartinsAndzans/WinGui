@@ -34,7 +34,7 @@
     <ClInclude Include="Graphics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Gdi.h">
+    <ClInclude Include="GdiPlus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
