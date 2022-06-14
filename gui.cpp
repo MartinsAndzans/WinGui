@@ -146,6 +146,18 @@ LRESULT CALLBACK WinGui::WindowProcedure(HWND hMainWindow, UINT Msg, WPARAM wPar
 	{
 		PAINTSTRUCT ps;
 		HDC WindowDC = BeginPaint(hMainWindow, &ps);
+		RECT rect = { 0 };
+		GetClientRect(hMainWindow, &rect);
+
+		std::array<COLORREF, 4> Colors = {
+			ColorU::Red,
+			ColorU::LightGreen,
+			ColorU::Blue,
+			ColorU::DarkGreen
+		};
+
+		GdiPlus::FillGradient(WindowDC, rect.right - 410, rect.bottom - 90, 400, 80, Colors);
+
 		EndPaint(hMainWindow, &ps);
 		return 0;
 	}

@@ -9,6 +9,7 @@
 #include <Windows.h>
 #include <string>
 #include <array>
+#include <cmath>
 
 enum ColorU {
 	
@@ -174,37 +175,33 @@ public:
 	
 	#pragma region FillFigures
 	
+	#pragma warning(disable:4838)
 	template<int32_t ArraySize>
 	static void FillGradient(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, std::array<COLORREF, ArraySize> ColorCollection) noexcept {
 			 
-		static_assert(ArraySize < 2, "-/ERROR/- In \"ColorCollection\" Array Must Be Minimum 2 Colors");
+		static_assert(ArraySize >= 2, "-/ERROR/- In \"ColorCollection\" Array Must Be Minimum 2 With Colors");
 
-		INT32 GradientWidth = Width / ArraySize;
-			 
+		const INT32 GradientWidth = Width / ArraySize - 1;
+		INT32 GradientStart = X, GradientEnd = X + GradientWidth;
+
 		for (size_t i = 0U; i < ColorCollection.size() - 1U; i++) {
 			 
 			TRIVERTEX Gradient[] = {
-				{  },
-				{  },
+				{ GradientStart, Y, (GetRValue(ColorCollection[i])) << 8ui16, (GetGValue(ColorCollection[i])) << 8ui16, (GetBValue(ColorCollection[i])) << 8ui16 },
+				{ GradientEnd, (Y + Height), (GetRValue(ColorCollection[i + 1])) << 8ui16, (GetGValue(ColorCollection[i + 1])) << 8ui16, (GetBValue(ColorCollection[i + 1])) << 8ui16 },
 			};
-			 
-			GRADIENT_RECT GradientRectangle = { 0, 1 };
+			
+			GRADIENT_RECT GradientRectangle[] = { { 0, 1 } };
 
-			//GradientFill(hdc, )
+			GradientFill(hdc, Gradient, ARRAYSIZE(Gradient), GradientRectangle, ARRAYSIZE(GradientRectangle), GRADIENT_FILL_RECT_H);
+
+			GradientStart += GradientWidth;
+			GradientEnd += GradientWidth;
 
 		}
 
-		//TRIVERTEX ColorCollection[] = {
-		//	{ position.x, position.y, 0xFF00, 0x0000, 0x0000, 0x0000 }, // Red Color
-		//	{ position.x, position.y, 0xFF00, 0xFF00, 0x0000, 0x0000 }, // Yellow Color
-		//	{ position.x, position.y, 0x0000, 0xFF00, 0x0000, 0x0000 }, // Green Color
-		//	{ position.x, position.y, 0x0000, 0xFF00, 0xFF00, 0x0000 }, // Light Blue Color
-		//	{ position.x, position.y, 0x0000, 0x0000, 0xFF00, 0x0000 }, // Blue Color
-		//	{ position.x, position.y, 0xFF00, 0x0000, 0xFF00, 0x0000 }, // Purple Color
-		//	{ position.x, position.y, 0xFF00, 0x0000, 0x0000, 0x0000 } // Red Color
-		//};
-
 	}
+	#pragma warning(default:4838)
 	
 	#pragma endregion
 
