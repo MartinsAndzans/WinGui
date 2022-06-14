@@ -6,126 +6,210 @@
 *                                   *
 ************************************/
 
-#include <ciso646>
 #include <Windows.h>
 #include <string>
-#include <vector>
-
-#define DIRECTION_UP 0x01
-#define DIRECTION_DOWN 0x02
-#define DIRECTION_LEFT 0x03
-#define DIRECTION_RIGHT 0x04
+#include <array>
 
 enum ColorU {
+	
 	White = RGB(255, 255, 255),
 	Black = RGB(0, 0, 0),
+	
 	LightRed = RGB(255, 145, 145),
 	Red = RGB(255, 0, 0),
 	DarkRed = RGB(145, 0, 0),
+	
 	LightGreen = RGB(145, 255, 145),
 	Green = RGB(0, 255, 0),
 	DarkGreen = RGB(0, 145, 0),
+	
 	LightBlue = RGB(145, 145, 255),
 	Blue = RGB(0, 0, 255),
 	DarkBlue = RGB(0, 0, 145)
+	
 };
 
-typedef struct GDI_TRIANGLE {
-	POINT point1;
-	POINT point2;
-	POINT point3;
-}*LPGDI_TRIANGLE, *PGDI_TRIANGLE;
+typedef struct TRIANGLE {
+	POINT Vertex1;
+	POINT Vertex2;
+	POINT Vertex3;
+}*LPTRIANGLE;
 
 class GdiPlus {
 public:
 
-	static VOID DrawLine(HDC hdc, POINT begin, POINT end, uint32_t line_width = 1U, COLORREF line_color = ColorU::Red) noexcept {
+	#pragma region DrawFigures
 
-		HPEN LinePen = CreatePen(PS_SOLID, line_width, line_color);
-		HPEN PreviousPen = static_cast<HPEN>(SelectObject(hdc, LinePen));
+	static void DrawLine(HDC hdc, POINT lineBegin, POINT lineEnd, COLORREF color = ColorU::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
-		MoveToEx(hdc, begin.x, begin.y, nullptr); // # Move to starting point #
-		LineTo(hdc, end.x, end.y); // # Draw line to ending point #
+		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, color);
+		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
 
-		SelectObject(hdc, PreviousPen);
-		DeleteObject(LinePen);
+		MoveToEx(hdc, lineBegin.x, lineBegin.y, nullptr); // # Move to starting point #
+		LineTo(hdc, lineEnd.x, lineEnd.y); // # Draw line to ending point #
 
-	}
-
-	static VOID DrawRectangle(HDC hdc, RECT rect, uint32_t line_width = 1U, COLORREF border_color = ColorU::Red) noexcept {
-
-		HPEN LinePen = CreatePen(PS_SOLID, line_width, border_color);
-		HPEN PreviousPen = static_cast<HPEN>(SelectObject(hdc, LinePen));
-
-		// TOP
-		MoveToEx(hdc, rect.left, rect.top, nullptr);
-		LineTo(hdc, rect.right, rect.top);
-		// BOTTOM
-		MoveToEx(hdc, rect.left, rect.bottom, nullptr);
-		LineTo(hdc, rect.right, rect.bottom);
-		// LEFT
-		MoveToEx(hdc, rect.left, rect.top, nullptr);
-		LineTo(hdc, rect.left, rect.bottom);
-		// RIGHT
-		MoveToEx(hdc, rect.right, rect.top, nullptr);
-		LineTo(hdc, rect.right, rect.bottom);
-
-		SelectObject(hdc, PreviousPen);
-		DeleteObject(LinePen);
-
+		SelectObject(hdc, PrevPen);
+		DeleteObject(StrokePen);
 
 	}
 
-	static VOID DrawCircle(HDC hdc, POINT center, uint32_t radius, uint32_t line_width = 1U, COLORREF border_color = ColorU::Red) noexcept {
+	static void DrawRectangle(HDC hdc, RECT rect, COLORREF color = ColorU::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
-		HPEN LinePen = CreatePen(PS_SOLID, line_width, border_color);
-		HPEN PreviousPen = static_cast<HPEN>(SelectObject(hdc, LinePen));
+		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, color);
+		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
 
-		MoveToEx(hdc, center.x + radius, center.y, nullptr); // # Move to starting point of a circle #
-		AngleArc(hdc, center.x, center.y, radius, 0.0F, 360.0F); // # Draw Circle #
-
-		SelectObject(hdc, PreviousPen);
-		DeleteObject(LinePen);
-
-	}
-
-	static VOID DrawTriangle(HDC hdc, GDI_TRIANGLE triangle, uint32_t line_width = 1U, COLORREF border_color = ColorU::Red) noexcept {
-		
-		HPEN LinePen = CreatePen(PS_SOLID, line_width, border_color);
-		HPEN PreviousPen = static_cast<HPEN>(SelectObject(hdc, LinePen));
-
-		POINT TrianglePoints[] = {
-			triangle.point1,
-			triangle.point2,
-			triangle.point3
+		POINT RectangleVertices[] = {
+			{ rect.left, rect.top },
+			{ rect.right, rect.top },
+			{ rect.right, rect.bottom },
+			{ rect.left, rect.bottom }
 		};
 
-		BYTE PointTypes[] = {
+		BYTE VerticesTypes[] = {
+			PT_MOVETO,
+			PT_LINETO,
+			PT_LINETO,
+			PT_LINETO | PT_CLOSEFIGURE
+		};
+
+		PolyDraw(hdc, RectangleVertices, VerticesTypes, ARRAYSIZE(RectangleVertices));
+
+		SelectObject(hdc, PrevPen);
+		DeleteObject(StrokePen);
+
+	}
+	
+	static void DrawRectangle(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, COLORREF color = ColorU::DarkBlue, UINT32 strokeWidth = 1U){
+		
+		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, color);
+		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
+		
+		POINT RectangleVertices[] = {
+			{ X, Y },
+			{ X + Width, Y },
+			{ X + Width, Y + Height },
+			{ X, Y + Height }
+		};
+		
+		BYTE VerticesTypes[] = {
+			PT_MOVETO,
+			PT_LINETO,
+			PT_LINETO,
+			PT_LINETO | PT_CLOSEFIGURE
+		};
+		
+		PolyDraw(hdc, RectangleVertices, VerticesTypes, ARRAYSIZE(RectangleVertices));
+		
+		SelectObject(hdc, PrevPen);
+		DeleteObject(StrokePen);
+		
+	}
+
+	static void DrawCircle(HDC hdc, POINT centerPoint, UINT32 radius, COLORREF color = ColorU::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+
+		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, color);
+		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
+
+		MoveToEx(hdc, centerPoint.x + radius, centerPoint.y, nullptr); // # Move to starting point of a circle #
+		AngleArc(hdc, centerPoint.x, centerPoint.y, radius, 0.0F, 360.0F); // # Draw circle #
+
+		SelectObject(hdc, PrevPen);
+		DeleteObject(StrokePen);
+
+	}
+
+	static void DrawTriangle(HDC hdc, TRIANGLE triangle, COLORREF color = ColorU::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+		
+		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, color);
+		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
+
+		POINT TriangleVertices[] = {
+			triangle.Vertex1,
+			triangle.Vertex2,
+			triangle.Vertex3
+		};
+
+		BYTE VerticesTypes[] = {
 			PT_MOVETO,
 			PT_LINETO,
 			PT_LINETO | PT_CLOSEFIGURE
 		};
 
-		PolyDraw(hdc, TrianglePoints, PointTypes, ARRAYSIZE(TrianglePoints));
+		PolyDraw(hdc, TriangleVertices, VerticesTypes, ARRAYSIZE(TriangleVertices));
 
-		SelectObject(hdc, PreviousPen);
-		DeleteObject(LinePen);
+		SelectObject(hdc, PrevPen);
+		DeleteObject(StrokePen);
 
 	}
 
-	static void DrawStar(HDC hdc, RECT rect, uint32_t strokeWidth = 1U, COLORREF color = ColorU::Red) {
+	static void DrawStar(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, COLORREF color = ColorU::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, color);
-		HGDIOBJ PreviousPen = SelectObject(hdc, StrokePen);
+		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
 
-		POINT StarPoints[] = {
-			{ rect.left, rect.bottom },
-			{  },
-			{  },
-			{  },
-			{  }
+		POINT StarVertices[] = {
+			{ X, Y + Width },
+			{ X + Width / 2L, Y },
+			{ X + Width, Y + Height },
+			{ X, Y + Width / 3L},
+			{ X + Width, Y + Width / 3L}
 		};
+
+		BYTE VerticesTypes[] = {
+			PT_MOVETO,
+			PT_LINETO,
+			PT_LINETO,
+			PT_LINETO,
+			PT_LINETO | PT_CLOSEFIGURE
+		};
+
+		PolyDraw(hdc, StarVertices, VerticesTypes, ARRAYSIZE(StarVertices));
+
+		SelectObject(hdc, PrevPen);
+		DeleteObject(StrokePen);
 
 	}
 
+	#pragma endregion
+	
+	#pragma region FillFigures
+	
+	template<int32_t ArraySize>
+	static void FillGradient(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, std::array<COLORREF, ArraySize> ColorCollection) noexcept {
+			 
+		static_assert(ArraySize < 2, "-/ERROR/- In \"ColorCollection\" Array Must Be Minimum 2 Colors");
+
+		INT32 GradientWidth = Width / ArraySize;
+			 
+		for (size_t i = 0U; i < ColorCollection.size() - 1U; i++) {
+			 
+			TRIVERTEX Gradient[] = {
+				{  },
+				{  },
+			};
+			 
+			GRADIENT_RECT GradientRectangle = { 0, 1 };
+
+			//GradientFill(hdc, )
+
+		}
+
+		//TRIVERTEX ColorCollection[] = {
+		//	{ position.x, position.y, 0xFF00, 0x0000, 0x0000, 0x0000 }, // Red Color
+		//	{ position.x, position.y, 0xFF00, 0xFF00, 0x0000, 0x0000 }, // Yellow Color
+		//	{ position.x, position.y, 0x0000, 0xFF00, 0x0000, 0x0000 }, // Green Color
+		//	{ position.x, position.y, 0x0000, 0xFF00, 0xFF00, 0x0000 }, // Light Blue Color
+		//	{ position.x, position.y, 0x0000, 0x0000, 0xFF00, 0x0000 }, // Blue Color
+		//	{ position.x, position.y, 0xFF00, 0x0000, 0xFF00, 0x0000 }, // Purple Color
+		//	{ position.x, position.y, 0xFF00, 0x0000, 0x0000, 0x0000 } // Red Color
+		//};
+
+	}
+	
+	#pragma endregion
+
 };
+
+/*uint64_t operator"" sqr(uint64_t value) {
+	return value * value;
+}*/

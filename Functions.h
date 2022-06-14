@@ -14,87 +14,56 @@
 class Functions {
 public:
 
-	/// <summary>
-	/// Converts Integer To Char Array
-	/// <para>1234 % 10 = 4 | 1234 / 10 = 123 || 123 % 10 = 3 | 123 / 10 = 12 || 12 % 10 = 2 | 12 / 10 = 1 || 1 % 10 = 1 | 1 / 10 = 0</para>
-	/// </summary>
-	/// <param name="Value">Integer Type [int64_t] Value To Be Converted</param>
-	/// <param name="Buffer">Char Buffer</param>
-	/// <param name="BufferSize">Buffer Size</param>
-	/// <returns>If Function Succeeded Returns TRUE, but If not Returns FALSE</returns>
-	static BOOL _itoa(int64_t Value, LPSTR Buffer, SIZE_T BufferSize) noexcept {
 
-		BOOL Minus = FALSE;
-		CONST SHORT ASCI_VALUE_ZERO = 48; // * Char Value 48 *
+	// # This function reverse number #
+	static uint64_t ReverseNumber(uint64_t Number) noexcept {
 
-		std::string StringValue{};
+		uint64_t ReversedNumber = 0;
 
-		if (Value == INT64_MIN) {
-			OutputDebugStringA("\'[Functions::_itoa] - Value \"OVERFLOW\"\'\r\n");
-			return FALSE;
+		/* Reverse Number */
+		while (Number != 0) {
+			ReversedNumber *= 10; // # Add zero to reversed number #
+			ReversedNumber += Number % 10; // # Get last digit from number and to reversed number #
+			Number /= 10; // # Remove last digit from number #
 		}
 
-		if (Value < 0) {
-			Minus = TRUE;
-			Value *= -1; // -Value *= -1
-		}
-
-		do {
-
-			CHAR Character = static_cast<CHAR>(Value % 10 + ASCI_VALUE_ZERO); // * Get Last Number - Char Value 48 - 57 *
-			Value = Value / 10; // Remove Last Number
-			StringValue.insert(0, 1, Character); // Add Character To Begining of StringValue
-
-		} while (Value != 0);
-		
-		if (Minus) {
-			StringValue.insert(0, "-");
-		}
-
-		if (BufferSize >= StringValue.length() + 1) {
-			strcpy_s(Buffer, BufferSize, StringValue.c_str());
-		} else {
-			OutputDebugStringA("\'[Functions::_itoa] - Buffer To Small\'\r\n");
-			return FALSE;
-		}
-
-		return TRUE;
+		return ReversedNumber;
 
 	}
 
-	/// <summary>
-	/// This Function Encrypt Text To ASCII Value Code
-	/// </summary>
-	/// <param name="TextToBeEncrypted">Text To Be Encrypted</param>
-	/// <returns>Encrypted Text</returns>
+	// # This function converts all uppercase letters to lowercase letters #
+	static void ToLower(LPSTR Text, size_t TextLength) noexcept {
+
+		for (size_t i = 0; i < TextLength; i++){
+			if (Text[i] >= 65 && Text[i] <= 90) {
+				Text[i] += 32;
+			}
+		}
+
+	}
+
+	// # This function converts all lowercase letters to upercase letters #
+	static void ToUpper(LPSTR Text, size_t TextLength) noexcept {
+
+		for (size_t i = 0; i < TextLength; i++) {
+			if (Text[i] >= 97 && Text[i] <= 122) {
+				Text[i] -= 32;
+			}
+		}
+
+	}
+
+	// # This function encrypt text to ASCII value code #
 	static std::string EncryptText(const std::string &TextToBeEncrypted) noexcept {
 
 		std::string EncryptedText{};
 
-		for (CHAR CHARACTER : TextToBeEncrypted) {
-			USHORT ASCII_VALUE = static_cast<USHORT>(CHARACTER);
+		for (char8_t Character : TextToBeEncrypted) {
+			USHORT ASCII_VALUE = static_cast<USHORT>(Character);
 			EncryptedText += std::to_string(ASCII_VALUE) + ":";
 		}
 
 		return EncryptedText;
-
-	}
-
-	/// <summary>
-	/// This Function Encrypt Unicode Text To ASCII Value Code
-	/// </summary>
-	/// <param name="UTextToBeEncrypted">Unicode Text To Be Encrypted</param>
-	/// <returns>Encrypted Unicode Text</returns>
-	static std::wstring EncryptText(const std::wstring &UTextToBeEncrypted) noexcept {
-
-		std::wstring EncryptedUText{};
-
-		for (WCHAR UCHARACTER : UTextToBeEncrypted) {
-			USHORT ASCII_VALUE = static_cast<USHORT>(UCHARACTER);
-			EncryptedUText += std::to_wstring(ASCII_VALUE) + L":";
-		}
-
-		return EncryptedUText;
 
 	}
 
@@ -109,11 +78,11 @@ public:
 
 		while (EncryptedText.length() != 0) {
 			if (EncryptedText.ends_with(':')) {
-				CHAR CHARACTER = static_cast<CHAR>(std::stoi(EncryptedText));
-				DecryptedText += CHARACTER;
+				char8_t Character = static_cast<char8_t>(std::stoi(EncryptedText));
+				DecryptedText += Character;
 				EncryptedText.replace(0, EncryptedText.find(':') + 1, "");
 			} else {
-				return "Cannot Decrypt Text Because Text Is Corrupted!";
+				return "Cannot decrypt text because text is corrupted!";
 			}
 		}
 
@@ -121,39 +90,14 @@ public:
 
 	}
 
-	/// <summary>
-	/// This Function Decrypt Unicode Text From ASCII Value Code
-	/// </summary>
-	/// <param name="UEncryptedText">Unicode Text To Be Decrypted</param>
-	/// <returns>Decrypted Unicode Text</returns>
-	static std::wstring DecryptText(std::wstring UEncryptedText) noexcept {
-
-		std::wstring UDecryptedText{};
-
-		while (UEncryptedText.length() != 0) {
-			if (UEncryptedText.ends_with(L':')) {
-				WCHAR UCHARACTER = static_cast<WCHAR>(std::stoi(UEncryptedText));
-				UDecryptedText += UCHARACTER;
-				UEncryptedText.replace(0, UEncryptedText.find(L':') + 1, L"");
-			} else {
-				return L"Cannot Decrypt Unicode Text Because Unicode Text Is Corrupted!";
-			}
-		}
-
-		return UDecryptedText;
-
-	}
-
-	/// <summary>This function finds character position in string</summary>
-	/// <returns>
-	/// If character has been found function returns character position,
-	/// <para>but if character not found function returns MAXSIZE_T value</para>
-	/// </returns>
-	static size_t FindChar(LPCSTR Text, CONST CHAR Char, SIZE_T TextLength) noexcept {
+	// # This function find character position in char array #
+	// ## If character has been found function returns character position ##
+	// ### If character has not been found function returns MAXSIZE_T value ###
+	static size_t FindChar(LPCSTR Text, const char8_t Char, size_t TextLength) noexcept {
 		
-		for (size_t I = 0; I < TextLength; I++) {
-			if (Text[I] == Char) {
-				return I;
+		for (size_t i = 0; i < TextLength; i++) {
+			if (Text[i] == Char) {
+				return i;
 			}
 		}
 
@@ -161,19 +105,17 @@ public:
 
 	}
 
-	/// <summary>This function finds unicode character position in unicode string</summary>
-	/// <returns>
-	/// If unicode character has been found function returns unicode character position,
-	/// <para>but if character not found function returns MAXSIZE_T value</para>
-	/// </returns>
-	static size_t FindChar(LPCWSTR UText, CONST WCHAR UChar, SIZE_T UTextLength) noexcept {
+	// # This function find character position in wchar_t array #
+	// ## If character has been found function returns character position ##
+	// ### If character has not been found function returns MAXSIZE_T value ###
+	static size_t FindChar(LPCWSTR UText, const wchar_t UChar, size_t UTextLength) noexcept {
 
-		for (size_t I = 0; I < UTextLength; I++) {
-			if (UText[I] == UChar) {
-				return I;
+		for (size_t i = 0; i < UTextLength; i++) {
+			if (UText[i] == UChar) {
+				return i;
 			}
 		}
-
+		
 		return MAXSIZE_T;
 
 	}
@@ -200,18 +142,18 @@ public:
 	}
 
 	/// <returns>If succeeded returns true, but if not returns false</returns>
-	static bool CopyTextToClipboard(HWND NewClipboardOwner, const std::string &Text) noexcept {
+	static bool CopyTextToClipboard(_In_ HWND NewClipboardOwner, _In_ const std::string &Text) noexcept {
 
-		if (Text.length() == 0) {
+		if (Text.empty()) {
 			return false;
 		}
 
-		if (OpenClipboard(NewClipboardOwner)) {
+		if (!OpenClipboard(NewClipboardOwner)) {
 			return false;
 		}
 
 		EmptyClipboard();
-		HLOCAL CopyData = LocalAlloc(LPTR | LMEM_VALID_FLAGS, sizeof(CHAR) * (Text.length() + 1));
+		HLOCAL CopyData = LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT | LMEM_VALID_FLAGS, sizeof(CHAR) * (Text.length() + 1));
 
 		if (CopyData == NULL) {
 			CloseClipboard();
@@ -236,25 +178,25 @@ public:
 	}
 
 	/// <returns>If succeeded returns true, but if not returns false</returns>
-	static bool CopyTextToClipboard(HWND NewClipboardOwner, const std::wstring &UText) noexcept {
+	static bool CopyTextToClipboard(_In_ HWND NewClipboardOwner, _In_ const std::wstring &UText) noexcept {
 
-		if (UText.length() == 0) {
+		if (UText.empty()) {
 			return false;
 		}
 
-		if (OpenClipboard(NewClipboardOwner)) {
+		if (!OpenClipboard(NewClipboardOwner)) {
 			return false;
 		}
 
 		EmptyClipboard();
-		HLOCAL CopyData = LocalAlloc(LPTR | LMEM_VALID_FLAGS, sizeof(WCHAR) * (UText.length() + 1));
+		HLOCAL CopyData = LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT | LMEM_VALID_FLAGS, sizeof(WCHAR) * (UText.length() + 1));
 
 		if (CopyData == NULL) {
 			CloseClipboard();
 			return false;
 		}
 
-		void* lpCopyData = LocalLock(CopyData);
+		void *lpCopyData = LocalLock(CopyData);
 
 		if (lpCopyData == nullptr) {
 			LocalFree(CopyData);
@@ -272,7 +214,7 @@ public:
 	}
 
 	/// <returns>If succeeded returns true, but if not returns false</returns>
-	static bool GetTextFromClipboard(HWND NewClipboardOwner, std::string &Buffer) noexcept {
+	static bool GetTextFromClipboard(_In_ HWND NewClipboardOwner, _Inout_ std::string &Buffer) noexcept {
 
 		if (!OpenClipboard(NewClipboardOwner)) {
 			return false;
@@ -302,7 +244,7 @@ public:
 	}
 
 	/// <returns>If succeeded returns true, but if not returns false</returns>
-	static bool GetTextFromClipboard(HWND NewClipboardOwner, std::wstring &UBuffer) noexcept {
+	static bool GetTextFromClipboard(_In_ HWND NewClipboardOwner, _Inout_ std::wstring &UBuffer) noexcept {
 
 		if (!OpenClipboard(NewClipboardOwner)) {
 			return false;
@@ -331,20 +273,38 @@ public:
 
 	}
 
-	static void ShowLastError(HWND OwnerWindow = HWND_DESKTOP, std::string AdditionalErrorMessage = "Additional Error Message") noexcept {
-		std::string ErrorMessage = "ERROR " + std::to_string(GetLastError()) + " - " + AdditionalErrorMessage;
+	static void OutputMultiplicationTable(_In_ std::ostream &out) noexcept {
+
+		for (int32_t FirstNumber = 1; FirstNumber <= 10; FirstNumber++) {
+			for (int32_t SecondNumber = 1; SecondNumber <= 10; SecondNumber++) {
+				out << "|\t" << FirstNumber << "\t*\t" << SecondNumber << "\t=\t" << FirstNumber * SecondNumber << "\t|\n";
+			}
+			out << "\n";
+		}
+
+	}
+
+	// # This function show last error in -/MessageBox/- #
+	static void ShowLastError(HWND OwnerWindow = HWND_DESKTOP, const std::string &AdditionalErrorMessage = "Additional Error Message") noexcept {
+		std::string ErrorMessage = "-/ERROR/- " + std::to_string(GetLastError()) + " - " + AdditionalErrorMessage;
 		MessageBoxA(OwnerWindow, ErrorMessage.c_str(), "-ERROR-", MB_OK | MB_ICONERROR);
+	}
+
+	// # This function show last error in -/MessageBox/- #
+	static void ShowLastError(HWND OwnerWindow = HWND_DESKTOP, const std::wstring &AdditionalErrorMessage = L"Additional Error Message") noexcept {
+		std::wstring ErrorMessage = L"-/ERROR/- " + std::to_wstring(GetLastError()) + L" - " + AdditionalErrorMessage;
+		MessageBoxW(OwnerWindow, ErrorMessage.c_str(), L"-ERROR-", MB_OK | MB_ICONERROR);
 	}
 
 	/// <param name="FilePath">File path with ".bmp" extension</param>
 	/// <param name="BitmapSize">Bitmap size in pixels</param>
 	/// <returns>If succeeded returns true, but if not returns false</returns>
-	static bool SaveBitmapToFile(HBITMAP Bitmap, LPCSTR FilePath, SIZE BitmapSize) noexcept {
+	static bool SaveBitmapToFile(_In_ HBITMAP Bitmap, _In_ LPCSTR FilePath, _In_ SIZE BitmapSize) noexcept {
 
 		std::ofstream image;
 
-		CONST WORD BM = 0x4D42; // * ASCII 'B' = 0x42 / 'M' = 0x4D *
-		CONST DWORD BitmapSizeCXxCY = BitmapSize.cx * BitmapSize.cy; // * Bitmap Size [cx x cy] *
+		constexpr WORD BM = 0x4D42; // * ASCII 'B' = 0x42 / 'M' = 0x4D *
+		const DWORD BitmapSizeCXxCY = BitmapSize.cx * BitmapSize.cy; // * Bitmap Size [cx x cy] *
 
 		BITMAPFILEHEADER bmfheader = { 0 };
 		bmfheader.bfType = BM;
@@ -363,8 +323,8 @@ public:
 		bmiheader.biSizeImage = BitmapSizeCXxCY;
 		bmiheader.biXPelsPerMeter = BitmapSize.cx;
 		bmiheader.biYPelsPerMeter = BitmapSize.cy;
-		bmiheader.biClrUsed = NULL;
-		bmiheader.biClrImportant = NULL;
+		bmiheader.biClrUsed = 0x00000000;
+		bmiheader.biClrImportant = 0x00000000;
 
 		std::unique_ptr<COLORREF[]> lpBitmapBytes = std::make_unique<COLORREF[]>(BitmapSizeCXxCY);
 
@@ -387,7 +347,7 @@ public:
 
 		image.write(reinterpret_cast<const char*>(&bmfheader), sizeof(BITMAPFILEHEADER)); // # BITMAP FILE HEADER #
 		image.write(reinterpret_cast<const char*>(&bmiheader), sizeof(BITMAPINFOHEADER)); // # BITMAP INFO HEADER #
-		image.write(reinterpret_cast<const char*>(lpBitmapBytes.get()), sizeof(COLORREF) * BitmapSizeCXxCY); // # COLOR BYTE ARRAY #
+		image.write(reinterpret_cast<const char*>(lpBitmapBytes.get()), sizeof(COLORREF) * BitmapSizeCXxCY); // # BITMAP BYTE ARRAY #
 
 		image.close();
 
@@ -397,15 +357,11 @@ public:
 
 };
 
-class Sound {
+class MP3Player {
 private:
-
-	MCIDEVICEID device_id = 0U;
-
+	MCIDEVICEID _DeviceId = 0U;
+	BOOL Repeat = FALSE;
 public:
-
-	typedef DWORD MCISTATUSCODE; // * MCISTATUSCODE [DWORD] is a 64-bit unsigned integer *
-	typedef DWORD MCISTATUS; // * MCISTATUS [DWORD] is a 64-bit unsigned integer *
 
 	// # MCI Error Codes #
 	enum ErrorCodes {
@@ -488,17 +444,30 @@ public:
 		MCIERROR_CUSTOM_DRIVER_BASE = 512
 	};
 
-	/// <param name="FilePath">Music FilePath -/ *.wav; *.wma; *.mp3 /-</param>
-	MCIERROR Open(LPCWSTR FilePath) noexcept {
+	MP3Player() {
 
-		MCI_OPEN_PARMS open = { 0 };
-		open.lpstrElementName = FilePath;
-		open.wDeviceID = 0U;
-
-		MCIERROR open_error = mciSendCommandW(0U, MCI_OPEN, MCI_WAIT | MCI_OPEN_ELEMENT, reinterpret_cast<DWORD_PTR>(&open));
-		device_id = open.wDeviceID;
+		MCI_OPEN_PARMS Open = { 0 };
+		Open.lpstrDeviceType = MAKEINTRESOURCE(MCI_DEVTYPE_CD_AUDIO);
 		
-		return open_error;
+		MCIERROR Error = mciSendCommand(NULL, MCI_OPEN, MCI_WAIT | MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID, reinterpret_cast<DWORD_PTR>(&Open));
+
+
+
+	}
+
+	bool IsOpen() {
+
+
+
+	}
+
+	/// <param name="FilePath">Music FilePath -/ *.wav; *.wma; *.mp3 /-</param>
+	MCIERROR Load(LPCWSTR FilePath) noexcept {
+
+		MCI_LOAD_PARMS Load = { 0 };
+		Load.lpfilename = FilePath;
+
+		return mciSendCommand(_DeviceId, MCI_LOAD, MCI_WAIT | MCI_LOAD_FILE, reinterpret_cast<DWORD_PTR>(&Load));
 
 	}
 
@@ -509,15 +478,15 @@ public:
 	/// <para>MCI_STATUS_MODE - Obtains Current Mode of The Device</para>
 	/// <para>MCI_STATUS_TIME_FORMAT - Obtains Current Time Format of The Device</para>
 	/// </summary>
-	MCIERROR GetPlaybackStatus(MCISTATUSCODE StatusCode, MCISTATUS *PlaybackStatus) noexcept {
+	MCIERROR GetPlaybackStatus(DWORD StatusCode, DWORD *PlaybackStatus) noexcept {
 
 		MCI_STATUS_PARMS status = { 0 };
 		status.dwItem = StatusCode; // Status Code
 		status.dwReturn = NULL; // Return Value
 
-		MCIERROR Error = mciSendCommandW(device_id, MCI_STATUS, MCI_WAIT | MCI_STATUS_ITEM, reinterpret_cast<DWORD_PTR>(&status));
+		MCIERROR Error = mciSendCommand(_DeviceId, MCI_STATUS, MCI_WAIT | MCI_STATUS_ITEM, reinterpret_cast<DWORD_PTR>(&status));
 		if (PlaybackStatus != nullptr)
-			*PlaybackStatus = static_cast<MCISTATUS>(status.dwReturn);
+			*PlaybackStatus = static_cast<DWORD>(status.dwReturn);
 		return Error;
 
 	}
@@ -533,9 +502,9 @@ public:
 		play.dwFrom = 0;
 		
 		if (NOTIFY) {
-			return mciSendCommandW(device_id, MCI_PLAY, MCI_NOTIFY | MCI_FROM, reinterpret_cast<DWORD_PTR>(&play));
+			return mciSendCommandW(_DeviceId, MCI_PLAY, MCI_NOTIFY | MCI_FROM, reinterpret_cast<DWORD_PTR>(&play));
 		} else {
-			return mciSendCommandW(device_id, MCI_PLAY, MCI_FROM, reinterpret_cast<DWORD_PTR>(&play));
+			return mciSendCommandW(_DeviceId, MCI_PLAY, MCI_FROM, reinterpret_cast<DWORD_PTR>(&play));
 		}
 
 	}
@@ -551,11 +520,11 @@ public:
 		seek.dwTo = SeekTo;
 
 		if (SeekTo == MCI_SEEK_TO_START) {
-			return mciSendCommandW(device_id, MCI_SEEK, MCI_WAIT | MCI_SEEK_TO_START, NULL);
+			return mciSendCommandW(_DeviceId, MCI_SEEK, MCI_WAIT | MCI_SEEK_TO_START, NULL);
 		} else if (SeekTo == MCI_SEEK_TO_END) {
-			return mciSendCommandW(device_id, MCI_SEEK, MCI_WAIT | MCI_SEEK_TO_END, NULL);
+			return mciSendCommandW(_DeviceId, MCI_SEEK, MCI_WAIT | MCI_SEEK_TO_END, NULL);
 		} else {
-			return mciSendCommandW(device_id, MCI_SEEK, MCI_WAIT | MCI_TO, reinterpret_cast<DWORD_PTR>(&seek));
+			return mciSendCommandW(_DeviceId, MCI_SEEK, MCI_WAIT | MCI_TO, reinterpret_cast<DWORD_PTR>(&seek));
 		}
 		
 	}
@@ -564,28 +533,28 @@ public:
 	/// This Function Pauses Playbeck
 	/// </summary>
 	MCIERROR Pause(VOID) noexcept {
-		return mciSendCommandW(device_id, MCI_PAUSE, MCI_WAIT, NULL);
+		return mciSendCommandW(_DeviceId, MCI_PAUSE, MCI_WAIT, NULL);
 	}
 
 	/// <summary>
 	/// This Function Resumes Playbeck
 	/// </summary>
 	MCIERROR Resume(VOID) noexcept {
-		return mciSendCommandW(device_id, MCI_RESUME, MCI_WAIT, NULL);
+		return mciSendCommandW(_DeviceId, MCI_RESUME, MCI_WAIT, NULL);
 	}
 
 	/// <summary>
 	/// This Function Stops Playbeck
 	/// </summary>
 	MCIERROR Stop(VOID) noexcept {
-		return mciSendCommandW(device_id, MCI_STOP, MCI_WAIT, NULL);
+		return mciSendCommandW(_DeviceId, MCI_STOP, MCI_WAIT, NULL);
 	}
 
 	/// <summary>
 	/// This Function Closes MCI Device
 	/// </summary>
 	MCIERROR Close(VOID) noexcept {
-		return mciSendCommandW(device_id, MCI_CLOSE, MCI_WAIT, NULL);
+		return mciSendCommandW(_DeviceId, MCI_CLOSE, MCI_WAIT, NULL);
 	}
 
 };
