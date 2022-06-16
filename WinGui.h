@@ -7,16 +7,39 @@
 
 class WinGui {
 private:
+
+	/***********************************/
+	/*     Main Window Properties      */
 	static HWND hMainWindow;
+	static SIZE MainWindowSize;
+	/***********************************/
+
+	static HWND hTestBtn;
+
 public:
+
 	// # Create Main Window #
-	static bool Init(LPCWSTR WindowTitle = L"##Window##", INT32 Width = 400, INT32 Height = 400, COLORREF BackgroundColor = RGB(145, 145, 255), INT nCmdShow = SW_SHOWDEFAULT) noexcept;
+	static bool CreateMainWindow(
+		_In_ LPCWSTR WindowTitle = L"##Window##",
+		_In_ INT32 Width = 600,
+		_In_ INT32 Height = 600,
+		_In_ COLORREF BackgroundColor = RGB(145, 145, 255),
+		_In_ LPCWSTR IconResource = IDI_APPLICATION,
+		_In_ LPWSTR CursorResource = IDC_ARROW,
+		_In_ INT nCmdShow = SW_SHOWDEFAULT
+	) noexcept;
+	
 	// # Massage Loop #
 	static void Run(void) noexcept;
+
 private:
+
 	// # Main Window Procedure #
 	static LRESULT CALLBACK WindowProcedure(HWND hMainWindow, UINT Msg, WPARAM wParam, LPARAM lParam);
+
 public:
+
+
 
 };
 

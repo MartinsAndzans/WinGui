@@ -34,18 +34,15 @@
     <ClInclude Include="GdiPlus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gui.h">
+    <ClInclude Include="WinGui.h">
       <Filter>Window</Filter>
-    </ClInclude>
-    <ClInclude Include="Animation.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wWinMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gui.cpp">
+    <ClCompile Include="WinGui.cpp">
       <Filter>Window</Filter>
     </ClCompile>
   </ItemGroup>

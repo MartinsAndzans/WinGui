@@ -6,9 +6,9 @@
 *                                               *
 ************************************************/
 
-#include <ciso646>
 #include <Windows.h>
 #include <string>
+#include <sstream>
 #include <fstream>
 
 class Functions {
@@ -22,17 +22,36 @@ public:
 
 		/* Reverse Number */
 		while (Number != 0) {
-			ReversedNumber *= 10; // # Add zero to reversed number #
-			ReversedNumber += Number % 10; // # Get last digit from number and to reversed number #
-			Number /= 10; // # Remove last digit from number #
+			ReversedNumber *= 10; // # Add zero to "ReversedNumber" #
+			ReversedNumber += Number % 10; // # Get last digit from "Number" and add to "ReversedNumber" #
+			Number /= 10; // # Remove last digit from "Number" #
 		}
 
 		return ReversedNumber;
 
 	}
 
+	// # This function sum all "Number" digits #
+	static uint64_t SumDigits(uint64_t Number) noexcept {
+
+		uint64_t Sum = 0;
+
+		/* Sum Digits */
+		while (Number != 0) {
+			Sum += Number % 10; // # Get last digit from "Number" and add to "Sum" #
+			Number /= 10; // # Remove last digit from "Number" #
+		}
+
+		return Sum;
+
+	}
+
 	// # This function converts all uppercase letters to lowercase letters #
 	static void ToLower(LPSTR Text, size_t TextLength) noexcept {
+
+		/* 65 - Start of Upper Case Letters
+		   90 - End of Upper Case Letters
+		   32 - Difference Between Upper and Lower Case Letters */
 
 		for (size_t i = 0; i < TextLength; i++){
 			if (Text[i] >= 65 && Text[i] <= 90) {
@@ -45,6 +64,10 @@ public:
 	// # This function converts all lowercase letters to upercase letters #
 	static void ToUpper(LPSTR Text, size_t TextLength) noexcept {
 
+		/* 97 - Start of Lower Case Letters
+		   122 - End of Lower Case Letters
+		   32 - Difference Between Lower and Upper Case Letters */
+
 		for (size_t i = 0; i < TextLength; i++) {
 			if (Text[i] >= 97 && Text[i] <= 122) {
 				Text[i] -= 32;
@@ -56,36 +79,32 @@ public:
 	// # This function encrypt text to ASCII value code #
 	static std::string EncryptText(const std::string &TextToBeEncrypted) noexcept {
 
-		std::string EncryptedText{};
+		std::string EncryptedText;
 
-		for (char8_t Character : TextToBeEncrypted) {
-			USHORT ASCII_VALUE = static_cast<USHORT>(Character);
+		for (const char8_t &Character : TextToBeEncrypted) {
+			int32_t ASCII_VALUE = static_cast<int32_t>(Character);
 			EncryptedText += std::to_string(ASCII_VALUE) + ":";
 		}
+
+		EncryptedText.pop_back();
 
 		return EncryptedText;
 
 	}
 
-	/// <summary>
-	/// This Function Decrypt Text From ASCII Value Code
-	/// </summary>
-	/// <param name="EncryptedText">Text To Be Decrypted</param>
-	/// <returns>Decrypted Text</returns>
-	static std::string DecryptText(std::string EncryptedText) noexcept {
+	// # This function decrypt text from ASCII value code #
+	static std::string DecryptText(const std::string &EncryptedText) noexcept {
 
-		std::string DecryptedText{};
+		std::string DecryptedText;
+		std::istringstream sstream(EncryptedText);
 
-		while (EncryptedText.length() != 0) {
-			if (EncryptedText.ends_with(':')) {
-				char8_t Character = static_cast<char8_t>(std::stoi(EncryptedText));
-				DecryptedText += Character;
-				EncryptedText.replace(0, EncryptedText.find(':') + 1, "");
-			} else {
-				return "Cannot decrypt text because text is corrupted!";
-			}
+		while (!sstream.eof()) {
+			std::string temp;
+			std::getline(sstream, temp, ':');
+			int32_t ASCII_VALUE = std::stoi(temp);
+			DecryptedText += static_cast<char8_t>(ASCII_VALUE);
 		}
-
+		
 		return DecryptedText;
 
 	}
@@ -120,39 +139,37 @@ public:
 
 	}
 
-	static std::string RoundDoubleString(std::string DoubleString) noexcept {
+	// This function Round Double String : Example "20.22440000" - "20.2244"
+	static bool RoundDoubleString(_Inout_ std::string &DoubleString) noexcept {
 
-		if (DoubleString.find('.') == std::string::npos) {
-			return DoubleString;
-		}
+		if (DoubleString.find('.') == std::string::npos)
+			return false;
 
-		while (DoubleString.ends_with('0') or DoubleString.ends_with('.')) {
+		while (DoubleString.ends_with('0') || DoubleString.ends_with('.')) {
 
 			if (DoubleString.ends_with('.')) {
 				DoubleString.pop_back();
-				return DoubleString;
+				return true;
 			}
 
 			DoubleString.pop_back();
 
 		}
 
-		return DoubleString;
+		return true;
 
 	}
 
 	/// <returns>If succeeded returns true, but if not returns false</returns>
 	static bool CopyTextToClipboard(_In_ HWND NewClipboardOwner, _In_ const std::string &Text) noexcept {
 
-		if (Text.empty()) {
+		if (Text.empty())
 			return false;
-		}
-
-		if (!OpenClipboard(NewClipboardOwner)) {
+		if (!OpenClipboard(NewClipboardOwner))
 			return false;
-		}
 
 		EmptyClipboard();
+
 		HLOCAL CopyData = LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT | LMEM_VALID_FLAGS, sizeof(CHAR) * (Text.length() + 1));
 
 		if (CopyData == NULL) {
@@ -180,15 +197,13 @@ public:
 	/// <returns>If succeeded returns true, but if not returns false</returns>
 	static bool CopyTextToClipboard(_In_ HWND NewClipboardOwner, _In_ const std::wstring &UText) noexcept {
 
-		if (UText.empty()) {
+		if (UText.empty())
 			return false;
-		}
-
-		if (!OpenClipboard(NewClipboardOwner)) {
+		if (!OpenClipboard(NewClipboardOwner))
 			return false;
-		}
 
 		EmptyClipboard();
+
 		HLOCAL CopyData = LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT | LMEM_VALID_FLAGS, sizeof(WCHAR) * (UText.length() + 1));
 
 		if (CopyData == NULL) {
