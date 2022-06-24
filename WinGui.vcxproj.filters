@@ -20,6 +20,12 @@
     <Filter Include="Window">
       <UniqueIdentifier>{bbb0f8a7-c2a0-497e-b9e3-c63f6fe33b11}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Dlg">
+      <UniqueIdentifier>{4ea347ec-ea0b-41f1-aa64-20d992a091fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Console">
+      <UniqueIdentifier>{01eb5c91-5e16-4760-b45a-d4664903ecca}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -28,14 +34,20 @@
     <ClInclude Include="Functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="GdiPlus.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WinGui.h">
       <Filter>Window</Filter>
+    </ClInclude>
+    <ClInclude Include="Mp3Player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Dlg.h">
+      <Filter>Dlg</Filter>
+    </ClInclude>
+    <ClInclude Include="Console.h">
+      <Filter>Console</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -44,6 +56,9 @@
     </ClCompile>
     <ClCompile Include="WinGui.cpp">
       <Filter>Window</Filter>
+    </ClCompile>
+    <ClCompile Include="Dlg.cpp">
+      <Filter>Dlg</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

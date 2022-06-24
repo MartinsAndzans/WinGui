@@ -1,103 +1,41 @@
 #pragma once
 
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
 #include <Windows.h>
 #include <string>
-
 #include "GdiPlus.h"
 
+typedef void(*DISPLAY)(HDC, INT32, INT32); // $ Display Callback Signature $
+
 class WinGui {
-private:
-
-	/***********************************/
-	/*     Main Window Properties      */
-	static HWND hMainWindow;
-	static SIZE MainWindowSize;
-	/***********************************/
-
-	static HWND hTestBtn;
-
 public:
 
 	// # Create Main Window #
-	static bool CreateMainWindow(
-		_In_ LPCWSTR WindowTitle = L"##Window##",
-		_In_ INT32 Width = 600,
-		_In_ INT32 Height = 600,
-		_In_ COLORREF BackgroundColor = RGB(145, 145, 255),
-		_In_ LPCWSTR IconResource = IDI_APPLICATION,
-		_In_ LPWSTR CursorResource = IDC_ARROW,
-		_In_ INT nCmdShow = SW_SHOWDEFAULT
-	) noexcept;
+	static bool wCreateWindow(_In_ LPCWSTR WindowTitle, _In_ INT32 Width, _In_ INT32 Height, _In_ COLORREF BackgroundColor, _In_ INT nCmdShow) noexcept;
 	
-	// # Massage Loop #
-	static void Run(void) noexcept;
+	// # Register Display Callback #
+	static void wRegisterDisplayCallback(DISPLAY DisplayCallback);
+
+	// # Main Loop #
+	static void wRun(void) noexcept;
 
 private:
 
 	// # Main Window Procedure #
-	static LRESULT CALLBACK WindowProcedure(HWND hMainWindow, UINT Msg, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK WindowProc(HWND hWindow, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-public:
+private:
 
+	//===== Main Window Properties =====//
+	static HWND hMainWindow; // * Handle to Main Window *
+	static SIZE MainWindowSize; // * Main Window Size *
+	static COLORREF BackgroundColor; // * Main Window Background Color *
+	//==================================//
 
+	static HWND hEditBox_Code;
+	static HWND hListBox_Controls;
 
 };
-
-//class ListBox {
-//
-//private:
-//
-//	HWND _hListBox = NULL;
-//	uint32_t _ItemCount = 0;
-//
-//protected:
-//
-//	const uint32_t _MAX_ITEM_COUNT_ = 32767U;
-//
-//	ListBox(HWND parent_window, uint16_t id) noexcept {
-//		_hListBox = CreateWindowEx(WS_EX_CLIENTEDGE, L"listbox", L"",
-//			WS_CHILD | WS_VISIBLE | WS_BORDER | LBS_NOINTEGRALHEIGHT,
-//			0, 0, 0, 0,
-//			parent_window,
-//			reinterpret_cast<HMENU>(id),
-//			GetModuleHandle(NULL),
-//			nullptr);
-//	}
-//
-//	BOOL AddItem(const std::wstring string, uint32_t value = 0U) noexcept {
-//		if (_hListBox != NULL and _ItemCount < _MAX_ITEM_COUNT_) {
-//			LRESULT index = SendMessageW(_hListBox, LB_ADDSTRING, NULL, reinterpret_cast<LPARAM>(string.c_str())); // Add Item String To ListBox
-//			SendMessageW(_hListBox, LB_SETITEMDATA, static_cast<WPARAM>(index), static_cast<LPARAM>(value)); // Add Value To Added ListBox Item
-//			_ItemCount++;
-//			return TRUE;
-//		}
-//		return FALSE;
-//	}
-//
-//	BOOL DeleteItem(uint32_t index) noexcept {
-//		if (_hListBox != NULL and index < _ItemCount) {
-//			SendMessageW(_hListBox, LB_DELETESTRING, static_cast<WPARAM>(index), NULL); // Remove Item From ListBox
-//			_ItemCount--;
-//			return TRUE;
-//		}
-//		return FALSE;
-//	}
-//
-//	LRESULT GetSelection(VOID) noexcept {
-//		if (_hListBox != NULL)
-//			return SendMessageW(_hListBox, LB_GETCURSEL, NULL, NULL);
-//	}
-//
-//	BOOL SelectItem(uint32_t index) noexcept {
-//		if (_hListBox != NULL) {
-//			SendMessageW(_hListBox, LB_SETCURSEL, static_cast<WPARAM>(index), NULL);
-//			return TRUE;
-//		}
-//		return FALSE;
-//	}
-//
-//	// ListBox_GetItemData(hwnd, index) SendMessage(hwnd, LB_GETITEMDATA, static_cast<WPARAM>(index), NULL) // Return Value is Value Associated With that Item
-//	// ListBox_FindString(hwnd, string) SendMessage(hwnd, LB_FINDSTRING, static_cast<WPARAM>(-1), static_cast<LPARAM>(string)) // Return Value is String Index
-//	// ListBox_SetTopItem(hwnd, index) SendMessage(hwnd, LB_SETTOPINDEX, static_cast<WPARAM>(index), NULL)
-//
-//};
