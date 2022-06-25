@@ -12,7 +12,8 @@
 #include <string>
 #include <array>
 
-struct ColorU {
+class ColorU {
+public:
 
 	enum Enum : UINT32 {
 
@@ -37,12 +38,12 @@ struct ColorU {
 
 	};
 
-	// # Known Colors #
+	// # Known Color #
 	ColorU(Enum KnownColor) {
 		m_rgbColor = KnownColor;
 	}
 
-	// # Color From Bytes #
+	// # Color From Byte Values #
 	ColorU(BYTE Red, BYTE Green, BYTE Blue) {
 		m_rgbColor = RGB(Red, Green, Blue);
 	}
@@ -52,7 +53,7 @@ struct ColorU {
 		m_rgbColor = rgbColor;
 	}
 
-	// # Color From Normalized Floats #
+	// # Color From Normalized Float Values #
 	ColorU(FLOAT RedF, FLOAT GreenF, FLOAT BlueF) {
 		
 		BYTE Red, Green, Blue;
@@ -85,11 +86,17 @@ typedef struct TRIANGLE {
 	POINT Vertex3;
 }*LPTRIANGLE;
 
+typedef struct POINT3D {
+	INT32 X;
+	INT32 Y;
+	INT32 Z;
+}*LPPOINT3D;
+
 struct GdiPlus {
 
 	#pragma region DrawFigures
 
-	static void DrawLine(HDC hdc, POINT lineBegin, POINT lineEnd, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+	static void DrawLine(HDC hdc, POINT lineBegin, POINT lineEnd, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) noexcept {
 
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -102,7 +109,7 @@ struct GdiPlus {
 
 	}
 
-	static void DrawRectangle(HDC hdc, const RECT &rect, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+	static void DrawRectangle(HDC hdc, const RECT &rect, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) noexcept {
 
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -128,7 +135,7 @@ struct GdiPlus {
 
 	}
 	
-	static void DrawRectangle(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U){
+	static void DrawRectangle(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U){
 		
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -154,7 +161,7 @@ struct GdiPlus {
 		
 	}
 
-	static void DrawCircle(HDC hdc, POINT centerPoint, UINT32 radius, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+	static void DrawCircle(HDC hdc, POINT centerPoint, UINT32 radius, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) noexcept {
 
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -167,7 +174,7 @@ struct GdiPlus {
 
 	}
 
-	static void DrawTriangle(HDC hdc, const TRIANGLE &triangle, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+	static void DrawTriangle(HDC hdc, const TRIANGLE &triangle, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) noexcept {
 		
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -191,7 +198,7 @@ struct GdiPlus {
 
 	}
 
-	static void DrawStar(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+	static void DrawStar(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) noexcept {
 
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -249,7 +256,7 @@ struct GdiPlus {
 	
 	#pragma region FillFigures
 
-	static void FillRectangle(HDC hdc, const RECT &rect, ColorU FillColor = ColorU::Enum::DarkBlue) noexcept {
+	static void FillRectangle(HDC hdc, const RECT &rect, ColorU FillColor = ColorU(ColorU::Enum::DarkBlue)) noexcept {
 
 		HBRUSH FillBrush = CreateSolidBrush(FillColor.get());
 		HGDIOBJ PrevBrush = SelectObject(hdc, FillBrush);
@@ -261,7 +268,7 @@ struct GdiPlus {
 
 	}
 
-	static void FillRectangle(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU FillColor = ColorU::Enum::DarkBlue) noexcept {
+	static void FillRectangle(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU FillColor = ColorU(ColorU::Enum::DarkBlue)) noexcept {
 
 		HBRUSH FillBrush = CreateSolidBrush(FillColor.get());
 		HGDIOBJ PrevBrush = SelectObject(hdc, FillBrush);
@@ -292,24 +299,24 @@ struct GdiPlus {
 
 			TRIVERTEX Gradient[] = {
 				#pragma warning(disable:4838)
-
-				{ 
-					GradientBegin, Y,
+				
+				{
+					GradientBegin, Y, 
 					MAKECOLOR16(GetRValue(ColorCollection[i].get())),
 					MAKECOLOR16(GetGValue(ColorCollection[i].get())),
-					MAKECOLOR16(GetBValue(ColorCollection[i].get())),
+					MAKECOLOR16(GetBValue(ColorCollection[i].get()))
 				},
 
-				{	
+				{
 					GradientEnd, Y + Height,
 					MAKECOLOR16(GetRValue(ColorCollection[i + 1].get())),
 					MAKECOLOR16(GetGValue(ColorCollection[i + 1].get())),
-					MAKECOLOR16(GetBValue(ColorCollection[i + 1].get())),
-				},
+					MAKECOLOR16(GetBValue(ColorCollection[i + 1].get()))
+				}
 
 				#pragma warning(default:4838)
 			};
-
+			
 			GRADIENT_RECT GradientRect[] = { { 0, 1 } };
 
 			GradientFill(hdc, Gradient, ARRAYSIZE(Gradient), GradientRect, ARRAYSIZE(GradientRect), GRADIENT_FILL_RECT_H);
@@ -324,5 +331,22 @@ struct GdiPlus {
 	}
 
 	#pragma endregion
+
+	#pragma region 3DFigures
+
+	static void DrawCube(HDC hdc, POINT3D centerPoint, UINT32 radius, UINT16 cameraAngle, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) {
+
+		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
+		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
+
+
+
+		SelectObject(hdc, PrevPen);
+		DeleteObject(StrokePen);
+
+	}
+
+	#pragma endregion
+
 
 };

@@ -104,10 +104,11 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 			ColorU(ColorU::Enum::DarkBlue),
 			ColorU(ColorU::Enum::Red),
 			ColorU(ColorU::Enum::Green),
-			ColorU(0.4F, 0.5F, 1.0F)
+			ColorU(0.2F, 0.6F, 1.0F)
 		};
 
 		GdiPlus::FillGradient(WindowDC, 10, 10, 400, 40, colors);
+		GdiPlus::DrawStar(WindowDC, 40, 40, 200, 200, ColorU(ColorU::Enum::Orange));
 
 		SelectObject(WindowDC, PrevPen);
 		DeleteObject(linePen);
