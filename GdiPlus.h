@@ -44,7 +44,7 @@ public:
 	}
 
 	// # Color From Byte Values #
-	ColorU(BYTE Red, BYTE Green, BYTE Blue) {
+	explicit ColorU(BYTE Red, BYTE Green, BYTE Blue) {
 		m_rgbColor = RGB(Red, Green, Blue);
 	}
 
@@ -54,7 +54,7 @@ public:
 	}
 
 	// # Color From Normalized Float Values #
-	ColorU(FLOAT RedF, FLOAT GreenF, FLOAT BlueF) {
+	explicit ColorU(FLOAT RedF, FLOAT GreenF, FLOAT BlueF) {
 		
 		BYTE Red, Green, Blue;
 
@@ -96,7 +96,7 @@ struct GdiPlus {
 
 	#pragma region DrawFigures
 
-	static void DrawLine(HDC hdc, POINT lineBegin, POINT lineEnd, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) noexcept {
+	static void DrawLine(HDC hdc, const POINT &lineBegin, const POINT &lineEnd, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -109,7 +109,7 @@ struct GdiPlus {
 
 	}
 
-	static void DrawRectangle(HDC hdc, const RECT &rect, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) noexcept {
+	static void DrawRectangle(HDC hdc, const RECT &rect, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -135,7 +135,7 @@ struct GdiPlus {
 
 	}
 	
-	static void DrawRectangle(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U){
+	static void DrawRectangle(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U){
 		
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -161,7 +161,7 @@ struct GdiPlus {
 		
 	}
 
-	static void DrawCircle(HDC hdc, POINT centerPoint, UINT32 radius, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) noexcept {
+	static void DrawCircle(HDC hdc, const POINT &centerPoint, UINT32 radius, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -174,7 +174,7 @@ struct GdiPlus {
 
 	}
 
-	static void DrawTriangle(HDC hdc, const TRIANGLE &triangle, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) noexcept {
+	static void DrawTriangle(HDC hdc, const TRIANGLE &triangle, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 		
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -198,7 +198,7 @@ struct GdiPlus {
 
 	}
 
-	static void DrawStar(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) noexcept {
+	static void DrawStar(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -230,10 +230,19 @@ struct GdiPlus {
 
 	#pragma region DrawImages
 
-	// # This function draw image with this extensions ".bmp; .png" #
-	static bool DrawImage(HDC hdc, LPCWSTR FilePath, INT32 X, INT32 Y, INT32 Width, INT32 Height) noexcept {
+	// # This Function Draw Image From File With This Extensions <.bmp; .png> #
+	// ## Type 'f' - Load Image From File | Type 'r' - Load Image From Resource ##
+	static bool DrawImage(HDC hdc, LPCWSTR FileName, CHAR Type, INT32 X, INT32 Y, INT32 Width, INT32 Height) noexcept {
 
-		HBITMAP ImageBitmap = (HBITMAP)(LoadImageW(NULL, FilePath, IMAGE_BITMAP, Width, Height, LR_LOADFROMFILE | LR_VGACOLOR)); // # Load Image #
+		HANDLE ImageBitmap = NULL;
+		
+		if (Type == 'f') {
+			ImageBitmap = LoadImageW(NULL, FileName, IMAGE_BITMAP, Width, Height, LR_LOADFROMFILE | LR_VGACOLOR); // # Load Image #
+		} else if (Type == 'r') {
+			HINSTANCE hInstance = GetModuleHandle(NULL);
+			ImageBitmap = LoadImageW(hInstance, FileName, IMAGE_BITMAP, Width, Height, LR_VGACOLOR); // # Load Image Resource #
+		}
+
 		if (ImageBitmap == NULL) {
 			return false;
 		}
@@ -256,7 +265,7 @@ struct GdiPlus {
 	
 	#pragma region FillFigures
 
-	static void FillRectangle(HDC hdc, const RECT &rect, ColorU FillColor = ColorU(ColorU::Enum::DarkBlue)) noexcept {
+	static void FillRectangle(HDC hdc, const RECT &rect, ColorU FillColor = ColorU::Enum::DarkBlue) noexcept {
 
 		HBRUSH FillBrush = CreateSolidBrush(FillColor.get());
 		HGDIOBJ PrevBrush = SelectObject(hdc, FillBrush);
@@ -268,7 +277,7 @@ struct GdiPlus {
 
 	}
 
-	static void FillRectangle(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU FillColor = ColorU(ColorU::Enum::DarkBlue)) noexcept {
+	static void FillRectangle(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU FillColor = ColorU::Enum::DarkBlue) noexcept {
 
 		HBRUSH FillBrush = CreateSolidBrush(FillColor.get());
 		HGDIOBJ PrevBrush = SelectObject(hdc, FillBrush);
@@ -301,17 +310,17 @@ struct GdiPlus {
 				#pragma warning(disable:4838)
 				
 				{
-					GradientBegin, Y, 
-					MAKECOLOR16(GetRValue(ColorCollection[i].get())),
-					MAKECOLOR16(GetGValue(ColorCollection[i].get())),
-					MAKECOLOR16(GetBValue(ColorCollection[i].get()))
+					GradientBegin, Y,                                 // X, Y
+					MAKECOLOR16(GetRValue(ColorCollection[i].get())), // Red
+					MAKECOLOR16(GetGValue(ColorCollection[i].get())), // Green
+					MAKECOLOR16(GetBValue(ColorCollection[i].get()))  // Blue
 				},
 
 				{
-					GradientEnd, Y + Height,
-					MAKECOLOR16(GetRValue(ColorCollection[i + 1].get())),
-					MAKECOLOR16(GetGValue(ColorCollection[i + 1].get())),
-					MAKECOLOR16(GetBValue(ColorCollection[i + 1].get()))
+					GradientEnd, Y + Height,                              // X, Y
+					MAKECOLOR16(GetRValue(ColorCollection[i + 1].get())), // Red
+					MAKECOLOR16(GetGValue(ColorCollection[i + 1].get())), // Green
+					MAKECOLOR16(GetBValue(ColorCollection[i + 1].get()))  // Blue
 				}
 
 				#pragma warning(default:4838)

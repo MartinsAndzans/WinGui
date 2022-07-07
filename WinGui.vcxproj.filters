@@ -26,15 +26,18 @@
     <Filter Include="Console">
       <UniqueIdentifier>{01eb5c91-5e16-4760-b45a-d4664903ecca}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Render">
+      <UniqueIdentifier>{ccaa3bbb-153f-4091-98f8-d2ce418284ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Direct3D9">
+      <UniqueIdentifier>{11d6dd26-fd70-4192-924d-9e66e05af5fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Direct2D1">
+      <UniqueIdentifier>{c0cedc05-6a00-4fe4-8441-7c2fb88f618d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="resource.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Functions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GdiPlus.h">
+    <ClInclude Include="Algoritms.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="WinGui.h">
@@ -49,6 +52,18 @@
     <ClInclude Include="Console.h">
       <Filter>Console</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GdiPlus.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Direct3D9.h">
+      <Filter>Direct3D9</Filter>
+    </ClInclude>
+    <ClInclude Include="Direct2D1.h">
+      <Filter>Direct2D1</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wWinMain.cpp">
@@ -60,11 +75,12 @@
     <ClCompile Include="Dlg.cpp">
       <Filter>Dlg</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Resource.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
+    <ClCompile Include="Direct3D9.cpp">
+      <Filter>Direct3D9</Filter>
+    </ClCompile>
+    <ClCompile Include="Direct2D1.cpp">
+      <Filter>Direct2D1</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Crosshair.cur">
@@ -75,5 +91,10 @@
     <Image Include="WindowIcon.ico">
       <Filter>Resource Files\Images</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

@@ -10,6 +10,7 @@
 #include <iostream>
 #include <conio.h>
 #include <string>
+#include <sstream>
 
 std::ostream& operator<<(std::ostream &out, char8_t Char) {
 	return out << static_cast<char>(Char);
@@ -17,54 +18,92 @@ std::ostream& operator<<(std::ostream &out, char8_t Char) {
 
 struct Console {
 
-	static bool _stdcall SetTitle(const std::string &Title) noexcept {
-		return SetConsoleTitleA(Title.c_str());
+	enum Colors : byte {
+
+		fBlack = 0x00,
+		fBlue = 0x01,
+		fGreen = 0x02,
+		fAqua = 0x03,
+		fRed = 0x04,
+		fPurple = 0x05,
+		fYellow = 0x06,
+		fWhite = 0x07,
+		fGray = 0x08,
+		fLightBlue = 0x09,
+		fLightGreen = 0x0A,
+		fLightAqua = 0x0B,
+		fLightRed = 0x0C,
+		fLightPurple = 0x0D,
+		fLightYellow = 0x0E,
+		fBrightWhite = 0x0F,
+
+		bBlack = 0x00,
+		bBlue = 0x10,
+		bGreen = 0x20,
+		bAqua = 0x30,
+		bRed = 0x40,
+		bPurple = 0x50,
+		bYellow = 0x60,
+		bWhite = 0x70,
+		bGray = 0x80,
+		bLightBlue = 0x90,
+		bLightGreen = 0xA0,
+		bLightAqua = 0xB0,
+		bLightRed = 0xC0,
+		bLightPurple = 0xD0,
+		bLightYellow = 0xE0,
+		bBrightWhite = 0xF0
+
+	};
+
+	#undef SetConsoleTitle
+	// # Set Console Title Text #
+	static bool _stdcall SetConsoleTitle(const std::string &title) noexcept {
+
+		bool Error = SetConsoleTitleA(title.c_str());
+		return Error;
+	
 	}
 
-	// #	%i - Integer	#	%d - Double	#
-	// #	%f - Float	#	%c - Char	#
-	// #	%s - String	#
-	static void _stdcall Print(const std::string &message, byte Color = 0x0F, char8_t end = '\n') {
-		
-		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-		SetConsoleTextAttribute(hOutput, Color);
+	// # Set Console Text Color Format: [0xBF] B - Background F - Foreground #
+	static bool _stdcall SetConsoleTextColor(byte color) noexcept {
 
-		std::cout << message.c_str() << end;
+		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+		bool Error = SetConsoleTextAttribute(hOutput, color);
+		return Error;
+	
+	}
+
+	// Print Message to Console
+	static void _stdcall Print(const std::string &message, char8_t end = '\n') noexcept {
+
+		std::cout << message << end;
 
 	}
 
-	static std::string _stdcall Input(const std::string &message = "> ", byte Color = 0x0F) noexcept {
-
-		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-		SetConsoleTextAttribute(hOutput, FOREGROUND_INTENSITY | Color);
+	static std::string _stdcall Input(const std::string &message = "> ") noexcept {
 		
+		fflush(stdin);
 		std::string Buffer;
-		std::cout << message.c_str();
+		std::cout << message;
 		std::getline(std::cin, Buffer);
 
 		return Buffer;
 
 	}
 
-	static char8_t _stdcall Pause(const std::string &message = "Press any key to continue . . .", byte Color = 0x0F) noexcept {
-		
-		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-		SetConsoleTextAttribute(hOutput, FOREGROUND_INTENSITY | Color);
-		
-		std::cout << message.c_str();
+	static char8_t _stdcall Pause(const std::string &message = "Press any key to continue . . .") noexcept {
 
 		fflush(stdin);
+		std::cout << message;
 		char8_t key = _getch();
-		std::cout << std::endl;
+		std::cout << "\n";
 
 		return key;
 
 	}
 
-	static void _stdcall DrawRectangleInConsole(USHORT Width = 40, USHORT Height = 20, const char8_t Symbol = '#', byte Color = 0x0F) noexcept {
-
-		HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-		SetConsoleTextAttribute(hOutput, FOREGROUND_INTENSITY | Color);
+	static void _stdcall DrawRectangleInConsole(USHORT Width = 40, USHORT Height = 20, char8_t Symbol = '#') noexcept {
 
 		for (USHORT Y = 1; Y <= Height; Y++) {
 			for (USHORT X = 1; X <= Width; X++) {

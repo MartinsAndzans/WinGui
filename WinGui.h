@@ -6,21 +6,21 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 #include <Windows.h>
 #include <string>
-#include "GdiPlus.h"
 
-typedef void(*DISPLAY)(HDC, INT32, INT32); // $ Display Callback Signature $
+#include "GdiPlus.h"
+#include "Direct2D1.h"
+#include "Algoritms.h"
+
+#include "resource.h"
 
 class WinGui {
 public:
 
 	// # Create Main Window #
-	static bool wCreateWindow(_In_ LPCWSTR WindowTitle, _In_ INT32 Width, _In_ INT32 Height, _In_ COLORREF BackgroundColor, _In_ INT nCmdShow) noexcept;
-	
-	// # Register Display Callback #
-	static void wRegisterDisplayCallback(DISPLAY DisplayCallback);
+	static bool wCreateMainWindow(_In_ LPCWSTR WindowTitle, _In_ INT32 Width, _In_ INT32 Height, _In_ INT nCmdShow) noexcept;
 
 	// # Main Loop #
-	static void wRun(void) noexcept;
+	static INT wMainLoop(void) noexcept;
 
 private:
 
@@ -32,10 +32,8 @@ private:
 	//===== Main Window Properties =====//
 	static HWND hMainWindow; // * Handle to Main Window *
 	static SIZE MainWindowSize; // * Main Window Size *
-	static COLORREF BackgroundColor; // * Main Window Background Color *
 	//==================================//
 
-	static HWND hEditBox_Code;
-	static HWND hListBox_Controls;
+	static Direct2D1 *GraphicsDevice;
 
 };
