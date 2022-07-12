@@ -74,16 +74,11 @@ INT WinGui::wMainLoop(void) noexcept {
 
 }
 
-struct POINTVERTEX {
-	FLOAT X, Y, Z;
-	DWORD Color;
-};
-
 enum class Fade { out, in };
 Fade state = Fade::out;
 COLORREF Color = D2D1RGB(0, 0, 255);
 
-D2D1_POINT_2F circle_point = { 0 };
+BOOL Reset = FALSE;
 
 LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, LPARAM lParam) {
 
@@ -98,11 +93,19 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 			return -1;
 		}
 
+		//CreateWindowW(L"Button", L"Open Dialog", WS_CHILD | WS_BORDER | WS_VISIBLE | BS_CENTER,
+		//	0, 0, 0, 0, hMainWindow, (HMENU)(0x0001), GetModuleHandle(NULL), nullptr);
+
 		INT16 FrameRate = (INT16)(1000.0F / 60.0F);
 		SetTimer(hMainWindow, 0xFF, FrameRate, NULL);
 
 		return 0;
 		
+	}
+	case WM_SIZE:
+	{
+		//HWND DlgBtn = GetDlgItem(hMainWindow, 0x0001);
+		//SetWindowPos(DlgBtn, NULL, LOWORD(lParam) - 210, 10, 200, 40, SWP_SHOWWINDOW);
 	}
 	case WM_TIMER:
 	{
@@ -128,104 +131,64 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 
 		SetBkMode(WindowDC, TRANSPARENT);
 
-		if (circle_point.x == 0 && circle_point.y == 0) {
-			circle_point = { rect.right / 2.0F, rect.bottom / 2.0F };
-		} else {
-			circle_point = { rect.right / 2.0F, rect.bottom / 2.0F };
-		}
-
 		if (state == Fade::out) {
 			Color = D2D1RGB(D2D1GetRValue(Color), D2D1GetGValue(Color), D2D1GetBValue(Color) - 0x05);
 		} else if (state == Fade::in) {
 			Color = D2D1RGB(D2D1GetRValue(Color), D2D1GetGValue(Color), D2D1GetBValue(Color) + 0x05);
 		}
 
-		GraphicsDevice->BeginDraw(WindowDC, rect, D2D1::ColorF(Color));
+		enum class MOVE { UP, DOWN };
 
-		GraphicsDevice->DrawCircle(circle_point, 100.0F, D2D1::ColorF((rand() % 256) / 255.0F, (rand() % 256) / 255.0F, (rand() % 256) / 255.0F), 4.0F);
-		
+		static FLOAT Speed = 0.0F, Acelaration = 2.0F;
+		static D2D1_POINT_2F circle_point = { rect.right / 2.0F, rect.bottom / 4.0F };
+		static MOVE state = MOVE::DOWN;
 
-
-		GraphicsDevice->EndDraw();
-
-		/* constexpr float_t X = 0.0F, Y = 0.0F, Z = 0.0F, CubeWidth = 10.0F, CubeHeight = 10.0F, CubeDepth = 10.0F;
-
-		POINTVERTEX CubeVerticies[] = {
-			// # Center Cube #
-			{ X - CubeWidth / 2.0F, Y + CubeHeight / 2.0F, Z - CubeDepth / 2.0F, D3DCOLOR_XRGB(0, 255, 0) }, // - + - 0
-			{ X + CubeWidth / 2.0F, Y + CubeHeight / 2.0F, Z - CubeDepth / 2.0F, D3DCOLOR_XRGB(255, 180, 0) }, // + + - 1
-			{ X - CubeWidth / 2.0F, Y - CubeHeight / 2.0F, Z - CubeDepth / 2.0F, D3DCOLOR_XRGB(255, 180, 0) }, // - - - 2
-			{ X + CubeWidth / 2.0F, Y - CubeHeight / 2.0F, Z - CubeDepth / 2.0F, D3DCOLOR_XRGB(255, 180, 0) }, // + - - 3
-			{ X - CubeWidth / 2.0F, Y + CubeHeight / 2.0F, Z + CubeDepth / 2.0F, D3DCOLOR_XRGB(255, 180, 0) }, // - + + 4
-			{ X + CubeWidth / 2.0F, Y + CubeHeight / 2.0F, Z + CubeDepth / 2.0F, D3DCOLOR_XRGB(255, 180, 0) }, // + + + 5
-			{ X - CubeWidth / 2.0F, Y - CubeHeight / 2.0F, Z + CubeDepth / 2.0F, D3DCOLOR_XRGB(255, 180, 0) }, // - - + 6
-			{ X + CubeWidth / 2.0F, Y - CubeHeight / 2.0F, Z + CubeDepth / 2.0F, D3DCOLOR_XRGB(0, 255, 0) }, // + - + 7
-		};
-
-		SHORT CubeIndeces[] = {
-			// Front
-			0, 1, 3,
-			3, 2, 0,
-			// Left
-			0, 4, 6,
-			6, 2, 0,
-			// Back
-			4, 5, 7,
-			7, 6, 4,
-			// Right
-			1, 5, 7,
-			7, 3, 1,
-			// Up
-			0, 4, 5,
-			5, 1, 0,
-			// Down
-			3, 7, 6,
-			6, 2, 3
-		};
-
-		if (state == Fade::out) {
-			Color = D3DCOLOR_XRGB((BYTE)(Color) >> 16, (BYTE)(Color) >> 8, (BYTE)(Color) - 0x05);
-		} else if (state == Fade::in) {
-			Color = D3DCOLOR_XRGB((BYTE)(Color) >> 16, (BYTE)(Color) >> 8, (BYTE)(Color) + 0x05);
+		if (Reset == TRUE) {
+			Speed = 0.0F;
+			circle_point = { rect.right / 2.0F, rect.bottom / 4.0F };
+			state = MOVE::DOWN;
+			Reset = FALSE;
 		}
 
-		constexpr DWORD CUSTOMFVF = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+		if (state == MOVE::DOWN) {
+			circle_point.y += Speed;
+			Speed += Acelaration;
+		} else if(state == MOVE::UP) {
+			circle_point.y -= Speed;
+			Speed -= Acelaration * 1.4F;
+		}
 
-		IDirect3DDevice9 *Device = GraphicsDevice->GetDevice();
+		if (circle_point.y + 100.0F - 10.0F >= rect.bottom) {
+			state = MOVE::UP;
+		} else if (Speed <= 0.0F) {
+			state = MOVE::DOWN;
+		}
 
-		IDirect3DVertexBuffer9 *Vertex = nullptr;
-		Device->CreateVertexBuffer(ARRAYSIZE(CubeVerticies) * sizeof(POINTVERTEX), 0, CUSTOMFVF, D3DPOOL_MANAGED, &Vertex, nullptr);
+		std::vector<VERTEX> Rect = {
+			VERTEX(10.0F, 10.0F),
+			VERTEX((FLOAT)(rect.right) - 10.0F, 10.0F),
+			VERTEX((FLOAT)(rect.right) - 10.0F, (FLOAT)(rect.bottom) - 10.0F),
+			VERTEX(10.0F, (FLOAT)(rect.bottom) - 10.0F)
+		};
 
-		LPVOID lpVertex = nullptr;
-		Vertex->Lock(0, 0, &lpVertex, 0);
-		CopyMemory(lpVertex, &CubeVerticies, ARRAYSIZE(CubeVerticies) * sizeof(POINTVERTEX));
-		Vertex->Unlock();
+		GraphicsDevice->BeginDraw(WindowDC, rect, D2D1::ColorF(Color));
 
-		IDirect3DIndexBuffer9 *Index= nullptr;
-		Device->CreateIndexBuffer(ARRAYSIZE(CubeIndeces) * sizeof(SHORT), 0, D3DFMT_INDEX16, D3DPOOL_MANAGED, &Index, nullptr);
+		GraphicsDevice->DrawEllipse(circle_point, 100.0F, 100.0F, D2D1::ColorF(D2D1::ColorF::LightSkyBlue), 10.0F, MODE::FILL);
+		GraphicsDevice->DrawGeometry(Rect, D2D1::ColorF(D2D1RGB(0, 145, 0)), 4.0F, MODE::DRAW);
 
-		LPVOID lpIndex = nullptr;
-		Index->Lock(0, 0, &lpIndex, 0);
-		CopyMemory(lpIndex, &CubeIndeces, ARRAYSIZE(CubeIndeces) * sizeof(SHORT));
-		Index->Unlock();
-
-		GraphicsDevice->BeginRender(Color);
-		GraphicsDevice->SetVirtualCamera({ 0.0F, 20.0F, -20.0F }, { 0.0F, 0.0F, 0.0F }, 60, 1.0F, 200.0F);
-
-		Device->SetFVF(CUSTOMFVF);
-		Device->SetRenderState(D3DRS_LIGHTING, FALSE);
-		Device->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
-		Device->SetRenderState(D3DRS_CULLMODE, D3DCULL_NONE);
-		Device->SetStreamSource(0, Vertex, 0, sizeof(POINTVERTEX));
-		Device->SetIndices(Index);
-		Device->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, 0, 8, 0, 12);
-
-		GraphicsDevice->EndRender(); */
+		GraphicsDevice->EndDraw();
 
 		EndPaint(hMainWindow, &ps);
 		
 		return 0;
 	
+	}
+	case WM_KEYDOWN:
+	{
+		if (wParam == VK_SPACE) {
+			Reset = TRUE;
+		}
+		return 0;
 	}
 	case WM_GETMINMAXINFO:
 	{

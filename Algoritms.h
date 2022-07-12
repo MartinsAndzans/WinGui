@@ -75,13 +75,13 @@ struct Algoritms {
 	}
 
 	// # This Function encrypt text to ASCII value code #
-	static std::string EncryptText(_In_ const std::string &Text) noexcept {
+	static std::string EncryptText(_In_ std::string_view Text) noexcept {
 
 		std::string EncryptedText;
 
-		for (const char8_t &Character : Text) {
-			int32_t ASCII_VALUE = static_cast<int32_t>(Character);
-			EncryptedText += std::to_string(ASCII_VALUE) + ':';
+		for (const char &Character : Text) {
+			int32_t ascii_value = static_cast<int32_t>(Character);
+			EncryptedText += std::to_string(ascii_value) + ':';
 		}
 
 		EncryptedText.pop_back();
@@ -91,16 +91,16 @@ struct Algoritms {
 	}
 
 	// # This Function decrypt text from ASCII value code #
-	static std::string DecryptText(_In_ const std::string &EncryptedText) noexcept {
+	static std::string DecryptText(_In_ std::string_view EncryptedText) noexcept {
 
 		std::string DecryptedText;
-		std::istringstream sstream(EncryptedText);
+		std::istringstream sstream(EncryptedText.data());
 
 		while (!sstream.eof()) {
 			std::string temp;
 			std::getline(sstream, temp, ':');
-			int32_t ASCII_VALUE = std::stoi(temp);
-			DecryptedText += static_cast<char8_t>(ASCII_VALUE);
+			int32_t ascii_value = std::stoi(temp);
+			DecryptedText += static_cast<char>(ascii_value);
 		}
 		
 		return DecryptedText;
@@ -159,7 +159,7 @@ struct Algoritms {
 	}
 
 	/// <returns>If Succeeded Function Returns TRUE, but if Failed Returns FALSE</returns>
-	static bool SetClipboardText(_In_ HWND NewClipboardOwner, _In_ const std::string &Text) noexcept {
+	static bool SetClipboardText(_In_ HWND NewClipboardOwner, _In_ std::string_view Text) noexcept {
 
 		if (!OpenClipboard(NewClipboardOwner)) {
 			return false;
@@ -198,7 +198,7 @@ struct Algoritms {
 			LPVOID lpCopyData = nullptr;
 			while (lpCopyData == nullptr)
 				lpCopyData = GlobalLock(hCopyData);
-			memcpy(lpCopyData, Text.c_str(), (Text.length() + 1) * sizeof(CHAR));
+			memcpy(lpCopyData, Text.data(), (Text.length() + 1) * sizeof(CHAR));
 			GlobalUnlock(hCopyData);
 
 			EmptyClipboard();
@@ -211,7 +211,7 @@ struct Algoritms {
 	}
 
 	/// <returns>If Succeeded Function Returns TRUE, but if Failed Returns FALSE</returns>
-	static bool SetClipboardText(_In_ HWND NewClipboardOwner, _In_ const std::wstring &UText) noexcept {
+	static bool SetClipboardText(_In_ HWND NewClipboardOwner, _In_ std::wstring_view UText) noexcept {
 
 		if (!OpenClipboard(NewClipboardOwner)) {
 			return false;
@@ -250,7 +250,7 @@ struct Algoritms {
 			LPVOID lpCopyData = nullptr;
 			while (lpCopyData == nullptr)
 				lpCopyData = GlobalLock(hCopyData);
-			memcpy(lpCopyData, UText.c_str(), (UText.length() + 1) * sizeof(WCHAR));
+			memcpy(lpCopyData, UText.data(), (UText.length() + 1) * sizeof(WCHAR));
 			GlobalUnlock(hCopyData);
 
 			EmptyClipboard();
@@ -327,7 +327,7 @@ struct Algoritms {
 	/// <param name="FilePath">File path with ".bmp" extension</param>
 	/// <param name="BitmapSize">Bitmap size in pixels</param>
 	/// <returns>If succeeded returns true, but if not returns false</returns>
-	static bool SaveBitmapToFile(_In_ HBITMAP hBitmap, _In_ LPCSTR FilePath, _In_ SIZE BitmapSize) noexcept {
+	static bool SaveBitmapToFile(_In_ HBITMAP hBitmap, _In_ LPCSTR FilePath, _In_ SIZE BitmapSize, _Inout_ std::string *ErrorString = nullptr) noexcept {
 
 		std::ofstream image;
 
@@ -336,8 +336,8 @@ struct Algoritms {
 
 		BITMAPFILEHEADER bmfheader = { 0 };
 		bmfheader.bfType = BM;
-		bmfheader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + sizeof(COLORREF) * BitmapSizeCXxCY; // # File size #
-		bmfheader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER); // # Offset to color bits #
+		bmfheader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + sizeof(COLORREF) * BitmapSizeCXxCY; // # File Size #
+		bmfheader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER); // # Offset To Color Bits #
 		bmfheader.bfReserved1 = 0x0000;
 		bmfheader.bfReserved2 = 0x0000;
 
@@ -354,24 +354,27 @@ struct Algoritms {
 		bmiheader.biClrUsed = 0x00000000;
 		bmiheader.biClrImportant = 0x00000000;
 
-		std::unique_ptr<COLORREF[]> lpBitmapBytes = nullptr;
-
-		try {
-			lpBitmapBytes = std::make_unique<COLORREF[]>(BitmapSizeCXxCY);
-		} catch (std::bad_alloc &e) {
+		std::unique_ptr<COLORREF[]> lpBitmapBytes = std::make_unique<COLORREF[]>(BitmapSizeCXxCY);
+		if (!lpBitmapBytes){
+			if (ErrorString != nullptr)
+				*ErrorString = "Out of Memory";
 			return false;
 		}
 
 		BITMAPINFO bminfo = { 0 };
 		bminfo.bmiHeader = bmiheader;
 
-		HDC ScreenDC = GetDC(HWND_DESKTOP);
-		GetDIBits(ScreenDC, hBitmap, 0, BitmapSize.cy, lpBitmapBytes.get(), &bminfo, DIB_RGB_COLORS);
-		ReleaseDC(HWND_DESKTOP, ScreenDC);
+		HDC hScreenDC = GetDC(HWND_DESKTOP);
+		HGDIOBJ hPrevBitmap = SelectObject(hScreenDC, hBitmap);
+		GetDIBits(hScreenDC, hBitmap, 0, BitmapSize.cy, lpBitmapBytes.get(), &bminfo, DIB_RGB_COLORS);
+		SelectObject(hScreenDC, hPrevBitmap);
+		ReleaseDC(HWND_DESKTOP, hScreenDC);
 
 		image.open(FilePath, std::ios::binary);
 
 		if (!image.is_open()) {
+			if (ErrorString != nullptr)
+				*ErrorString = "Cannot Create File";
 			return false;
 		}
 
@@ -380,6 +383,10 @@ struct Algoritms {
 		image.write(reinterpret_cast<char*>(lpBitmapBytes.get()), sizeof(COLORREF) * BitmapSizeCXxCY); // # BITMAP BYTE ARRAY #
 		
 		image.close();
+
+		if (ErrorString != nullptr) {
+			*ErrorString = "Operation Completed Successfully";
+		}
 
 		return true;
 
