@@ -18,51 +18,50 @@ std::ostream& operator<<(std::ostream &out, char8_t Char) {
 
 struct Console {
 
-	enum Colors : byte {
+	enum ColorCodes : byte {
 
-		fBlack = 0x00,
-		fBlue = 0x01,
-		fGreen = 0x02,
-		fAqua = 0x03,
-		fRed = 0x04,
-		fPurple = 0x05,
-		fYellow = 0x06,
-		fWhite = 0x07,
-		fGray = 0x08,
-		fLightBlue = 0x09,
-		fLightGreen = 0x0A,
-		fLightAqua = 0x0B,
-		fLightRed = 0x0C,
-		fLightPurple = 0x0D,
-		fLightYellow = 0x0E,
-		fBrightWhite = 0x0F,
+		F_Black = 0x00,
+		F_Blue = 0x01,
+		F_Green = 0x02,
+		F_Aqua = 0x03,
+		F_Red = 0x04,
+		F_Purple = 0x05,
+		F_Yellow = 0x06,
+		F_White = 0x07,
+		F_Gray = 0x08,
+		F_LightBlue = 0x09,
+		F_LightGreen = 0x0A,
+		F_LightAqua = 0x0B,
+		F_LightRed = 0x0C,
+		F_LightPurple = 0x0D,
+		F_LightYellow = 0x0E,
+		F_BrightWhite = 0x0F,
 
-		bBlack = 0x00,
-		bBlue = 0x10,
-		bGreen = 0x20,
-		bAqua = 0x30,
-		bRed = 0x40,
-		bPurple = 0x50,
-		bYellow = 0x60,
-		bWhite = 0x70,
-		bGray = 0x80,
-		bLightBlue = 0x90,
-		bLightGreen = 0xA0,
-		bLightAqua = 0xB0,
-		bLightRed = 0xC0,
-		bLightPurple = 0xD0,
-		bLightYellow = 0xE0,
-		bBrightWhite = 0xF0
+		B_Black = 0x00,
+		B_Blue = 0x10,
+		B_Green = 0x20,
+		B_Aqua = 0x30,
+		B_Red = 0x40,
+		B_Purple = 0x50,
+		B_Yellow = 0x60,
+		B_White = 0x70,
+		B_Gray = 0x80,
+		B_LightBlue = 0x90,
+		B_LightGreen = 0xA0,
+		B_LightAqua = 0xB0,
+		B_LightRed = 0xC0,
+		B_LightPurple = 0xD0,
+		B_LightYellow = 0xE0,
+		B_BrightWhite = 0xF0
 
 	};
 
-	#undef SetConsoleTitle
-	// # Set Console Title Text #
-	static bool _stdcall SetConsoleTitle(const std::string &title) noexcept {
+	//  ===== Set Console Title - only works on External-Console =====
+	static bool _stdcall Title(std::string_view title) noexcept {
+		
+		bool Success = SetConsoleTitleA(title.data());
+		return Success;
 
-		bool Error = SetConsoleTitleA(title.c_str());
-		return Error;
-	
 	}
 
 	// # Set Console Text Color Format: [0xBF] B - Background F - Foreground #

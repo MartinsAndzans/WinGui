@@ -34,11 +34,7 @@ HANDLE Dlg::CreateDialogTemplate(const DIALOG &Dlg, const std::array<ITEM, ItemC
 		return NULL;
 	}
 
-	/* TODO: Create Dialog Template */
-
-	//========//
-	// DIALOG //
-	//========//
+	//===== TODO: DIALOG =====//
 	LPDLGTEMPLATE lpDlg = (LPDLGTEMPLATE)(hDlgTemplate);
 	lpDlg->style = Dlg.Style;
 	lpDlg->dwExtendedStyle = Dlg.ExtendedStyle;

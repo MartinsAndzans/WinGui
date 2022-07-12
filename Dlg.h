@@ -67,55 +67,45 @@ struct ITEM {
 	DWORD Id; // * Dialog Item Id *
 };
 
-// # DIALOG STYLE #
-typedef struct DLG {
+// # Dialog Template #
+struct DialogTemplate {
 	LPCWSTR Title;
-	UINT16 Width;
-	UINT16 Height;
-	UINT16 FontHeight;
+	WORD Width;
+	WORD Height;
+	WORD FontHeight;
+	WORD FontWeight;
 	LPCWSTR FontFamily;
-}*LPDLG, *PDLG;
+};
 
-class DlgBox {
+class Dialog {
 public:
 
-	DlgBox() : m_hDlgTemplate(nullptr), m_DlgTemplateSize(0) {
+	Dialog() : m_hDlgTemplate(nullptr), m_DlgTemplateSize(0) {
 		
-		m_DlgTitle = L"Dialog";
-		m_DlgSize = { 400, 200 };
-		m_DlgFontHeight = 20;
-		m_DlgFontWeight = 0;
-		m_DlgFontItalic = FALSE;
-		m_DlgFontFamily = L"Segoe UI";
+		m_DialogTitle = L"Dialog";
+		m_DiaogSize = { 400, 200 };
+		m_FontHeight = 20;
+		m_FontWeight = 0;
+		m_FontItalic = FALSE;
+		m_FontFamily = L"Segoe UI";
 
 	}
 
-	void SetDialogTitle(LPCWSTR DlgTitle) {
-		m_DlgTitle = DlgTitle;
-	}
+	Dialog(const Dialog &other) {
 
-	void SetDialogSize(LONG Width, LONG Height) {
-		m_DlgSize = {
-			.cx = Width,
-			.cy = Height
-		};
-	}
 
-	void SetDialogFont() {
 
 	}
-
-	DlgBox(const DlgBox &Other) = default;
 
 private:
 
 	//=========== DIALOG ===========//
-	std::wstring m_DlgTitle;
-	SIZE m_DlgSize;
-	WORD m_DlgFontHeight;
-	WORD m_DlgFontWeight;
-	BYTE m_DlgFontItalic;
-	std::wstring m_DlgFontFamily;
+	std::wstring m_DialogTitle;
+	SIZE m_DiaogSize;
+	WORD m_FontHeight;
+	WORD m_FontWeight;
+	BYTE m_FontItalic;
+	std::wstring m_FontFamily;
 	//==============================//
 	
 	LPVOID m_hDlgTemplate; // * Handle To Dialog Template *

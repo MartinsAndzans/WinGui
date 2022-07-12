@@ -1,13 +1,19 @@
 #pragma once
 
+//===== LIBRARYS =====//
 #pragma comment(lib, "d3d9.lib") // # DirectX 3D Version 9.0 #
 #pragma comment(lib, "d3dx9.lib") // # DirectX 3D SDK Version 9.0 #
+//====================//
 
+#define WIN32_LEAN_AND_MEAN
+
+//===== HEADERS ======//
 #include <stdexcept>
 #include <Windows.h>
 #include <d3d9.h> // # DirectX 3D Version 9.0 #
 #include <d3dx9math.h> // # DirectX 3D SDK Version 9.0 #
 #include <string>
+//====================//
 
 class Direct3D9 {
 public:

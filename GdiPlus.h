@@ -1,6 +1,8 @@
 #pragma once
 
+//===== LIBRARYS =====//
 #pragma comment(lib, "msimg32.lib")
+//====================//
 
 /************************************
 *                                   *
@@ -8,14 +10,20 @@
 *                                   *
 ************************************/
 
+#define WIN32_LEAN_AND_MEAN
+
+//===== HEADERS ======//
 #include <Windows.h>
 #include <string>
 #include <array>
+//====================//
 
 class ColorU {
 public:
 
 	enum Enum : UINT32 {
+
+		Aquamarine = RGB(0, 255, 150),
 
 		White = RGB(255, 255, 255),
 		Black = RGB(0, 0, 0),
@@ -34,7 +42,6 @@ public:
 
 		Orange = RGB(255, 150, 0),
 		Yellow = RGB(255, 255, 0),
-		Aquamarine = RGB(0, 255, 150)
 
 	};
 
@@ -48,7 +55,6 @@ public:
 		m_rgbColor = RGB(Red, Green, Blue);
 	}
 
-	// # Color Format: 0xAABBGGRR #
 	ColorU(UINT32 rgbColor) {
 		m_rgbColor = rgbColor;
 	}
@@ -66,8 +72,8 @@ public:
 		
 	}
 
-	ColorU(const ColorU &Other) {
-		m_rgbColor = Other.m_rgbColor;
+	ColorU(const ColorU &other) {
+		m_rgbColor = other.m_rgbColor;
 	}
 
 	UINT32 get(void) const {
@@ -295,7 +301,7 @@ struct GdiPlus {
 
 		#define MAKECOLOR16(Byte) (COLOR16)(Byte) << 8
 
-		static_assert(ArraySize >= 2, "[ERROR]: In \"ColorCollection\" Array Must Be Minimum 2 Colors");
+		static_assert(ArraySize >= 2, "In \"ColorCollection\" Array Must Be Minimum TWO Colors");
 
 		const INT32 GradientWidth = Width / (ArraySize - 1); // * Gradient Width Between 2 Colors *
 
