@@ -75,10 +75,11 @@ INT WinGui::wMainLoop(void) noexcept {
 }
 
 enum class Fade { out, in };
-Fade state = Fade::out;
-COLORREF Color = D2D1RGB(0, 0, 255);
+static Fade state = Fade::out;
+static COLORREF Color = D2D1RGB(0, 0, 255);
 
-BOOL Reset = FALSE;
+static BOOL Reset = FALSE;
+static D2D1_POINT_2F circle_point = { 124.0F, 124.0F };
 
 LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, LPARAM lParam) {
 
@@ -140,12 +141,11 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 		enum class MOVE { UP, DOWN };
 
 		static FLOAT Speed = 0.0F, Acelaration = 2.0F;
-		static D2D1_POINT_2F circle_point = { rect.right / 2.0F, rect.bottom / 4.0F };
 		static MOVE state = MOVE::DOWN;
 
 		if (Reset == TRUE) {
 			Speed = 0.0F;
-			circle_point = { rect.right / 2.0F, rect.bottom / 4.0F };
+			circle_point.y = 124.0F;
 			state = MOVE::DOWN;
 			Reset = FALSE;
 		}
@@ -153,9 +153,9 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 		if (state == MOVE::DOWN) {
 			circle_point.y += Speed;
 			Speed += Acelaration;
-		} else if(state == MOVE::UP) {
+		} else if (state == MOVE::UP) {
 			circle_point.y -= Speed;
-			Speed -= Acelaration * 1.4F;
+			Speed -= Acelaration * 2.0F;
 		}
 
 		if (circle_point.y + 100.0F - 10.0F >= rect.bottom) {
@@ -173,8 +173,12 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 
 		GraphicsDevice->BeginDraw(WindowDC, rect, D2D1::ColorF(Color));
 
-		GraphicsDevice->DrawEllipse(circle_point, 100.0F, 100.0F, D2D1::ColorF(D2D1::ColorF::LightSkyBlue), 10.0F, MODE::FILL);
-		GraphicsDevice->DrawGeometry(Rect, D2D1::ColorF(D2D1RGB(0, 145, 0)), 4.0F, MODE::DRAW);
+		// # Bouncing Ball #
+		GraphicsDevice->DrawEllipse(circle_point, 100.0F, 100.0F, D2D1::ColorF(D2D1::ColorF::LightSkyBlue), FILLMODE::FILL);
+		// # Geometry Test #
+		GraphicsDevice->DrawGeometry(Rect, D2D1::ColorF(D2D1RGB(0, 145, 0)), FILLMODE::DRAW, 4.0F);
+
+
 
 		GraphicsDevice->EndDraw();
 
@@ -187,6 +191,10 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 	{
 		if (wParam == VK_SPACE) {
 			Reset = TRUE;
+		} else if (wParam == VK_RIGHT) {
+			circle_point.x += 10.0F;
+		} else if (wParam == VK_LEFT) {
+			circle_point.x -= 10.0F;
 		}
 		return 0;
 	}

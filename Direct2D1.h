@@ -13,7 +13,6 @@
 #define WIN32_LEAN_AND_MEAN
 
 //===== HEADERS ======//
-#include <assert.h>
 #include <stdexcept>
 #include <Windows.h>
 #include <vector>
@@ -21,8 +20,6 @@
 #include <d2d1.h>
 #include <string>
 //====================//
-
-#define dynamic_assert(condition, message) !(condition) ? (_wassert(#message), _CRT_WIDE(__FILE__), (UINT)(__LINE__)) : 
 
 #define D2D1RGB(r, g, b) (UINT32)((((DWORD)(BYTE)(r)) << 16) | ((WORD)(BYTE)(g) << 8) | ((BYTE)(b)))
 #define D2D1GetRValue(rgb) (BYTE)((rgb) >> 16)
@@ -59,7 +56,7 @@ private:
 };
 
 // # Fill Modes # 
-enum class MODE {
+enum class FILLMODE {
 	DRAW = 0x05,
 	FILL = 0x0F
 };
@@ -70,14 +67,14 @@ public:
 	explicit Direct2D1(D2D1_FACTORY_TYPE FactoryType);
 	Direct2D1(const Direct2D1 &other) = delete;
 
-	void BeginDraw(HDC DeviceContext, const RECT &DrawingSurface, D2D1_COLOR_F ClearColor);
+	void BeginDraw(HDC hdc, const RECT &DrawRect, D2D1_COLOR_F ClearColor);
 	void EndDraw(void);
 
-	bool DrawGeometry(const std::vector<VERTEX> &Vertecies, D2D1_COLOR_F Color, FLOAT strokeWidth = 1.0F,
-		MODE Mode = MODE::DRAW, const D2D1_MATRIX_3X2_F *Transform = nullptr);
+	void DrawGeometry(const std::vector<VERTEX> &Vertecies, D2D1_COLOR_F Color, FILLMODE  Mode = FILLMODE::DRAW,
+		FLOAT strokeWidth = 1.0F, const D2D1_MATRIX_3X2_F *Transform = nullptr);
 
-	void DrawEllipse(D2D1_POINT_2F centerPoint, FLOAT RadiusX, FLOAT RadiusY, D2D1_COLOR_F Color, FLOAT strokeWidth = 1.0F,
-		MODE Mode = MODE::DRAW, const D2D1_MATRIX_3X2_F *Transform = nullptr);
+	void DrawEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLOAT RadiusY, const D2D1_COLOR_F &Color, FILLMODE Mode = FILLMODE::DRAW,
+		FLOAT strokeWidth = 1.0F, const D2D1_MATRIX_3X2_F *Transform = nullptr);
 	
 	void DrawBitmap(D2D1_RECT_F Rect, const D2D1Bitmap &Bitmap, INT32 Frame = 0, const D2D1_MATRIX_3X2_F *Transform = nullptr);
 
