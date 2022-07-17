@@ -6,6 +6,7 @@
 *                                               *
 ************************************************/
 
+#include <memory>
 #include <Windows.h>
 #include <string>
 #include <sstream>
@@ -312,16 +313,33 @@ struct Algoritms {
 
 	}
 
-	// # This Function show last error in -/MessageBox/- #
-	static void ShowLastError(HWND hWndParent, const std::string &ErrorExplanation) noexcept {
-		std::string ErrorMessage = "[ERROR]: " + std::to_string(GetLastError()) + " - " + ErrorExplanation;
-		MessageBoxA(hWndParent, ErrorMessage.c_str(), "Error", MB_OK | MB_ICONERROR);
-	}
+	// # This Function Show Last Error in -/MessageBox/- #
+	static void ShowLastError(_In_opt_ HWND hWndParent) noexcept {
 
-	// # This Function show last error in -/MessageBox/- #
-	static void ShowLastError(HWND hWndParent, const std::wstring &ErrorExplanation) noexcept {
-		std::wstring ErrorMessage = L"[ERROR]: " + std::to_wstring(GetLastError()) + L" - " + ErrorExplanation;
-		MessageBoxW(hWndParent, ErrorMessage.c_str(), L"Error", MB_OK | MB_ICONERROR);
+		DWORD LastError = GetLastError(); // # Last Error #
+
+		//========== ERROR MESSAGE BUFFER ==========//
+		constexpr size_t MAX_CHAR_STRING = 256U;
+		CHAR LastErrorMessage[MAX_CHAR_STRING] = { ' ', '-', ' ' };
+		//==========================================//
+
+		//========== GET LAST ERROR MESSAGE ==========//
+		DWORD Length = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
+			nullptr, LastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			LastErrorMessage + 3, MAX_CHAR_STRING - 4, nullptr);
+		//============================================//
+
+		std::string MessageBoxTitle = "ERROR " + std::to_string(LastError);
+		std::string ErrorMessage = "Error Code: " + std::to_string(LastError);
+
+		if (Length == 0) {
+			ErrorMessage += " - Unknown Error";
+		} else {
+			ErrorMessage += LastErrorMessage;
+		}
+
+		MessageBoxA(hWndParent, ErrorMessage.c_str(), MessageBoxTitle.c_str(), MB_OK | MB_ICONERROR);
+
 	}
 
 	/// <param name="FilePath">File path with ".bmp" extension</param>

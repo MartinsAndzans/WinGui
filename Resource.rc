@@ -60,13 +60,13 @@ BEGIN
         BLOCK "042604b0"
         BEGIN
             VALUE "CompanyName", "Default Company"
-            VALUE "FileDescription", "Windows Desktop Application"
+            VALUE "FileDescription", "Window -SandBox-"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "WinGui.exe"
             VALUE "LegalCopyright", "Copyright (C) 2022"
             VALUE "OriginalFilename", "WinGui.exe"
             VALUE "ProductName", "Window -Template-"
-            VALUE "ProductVersion", "1.0.0.1"
+            VALUE "ProductVersion", "1.0.1.1"
         END
     END
     BLOCK "VarFileInfo"

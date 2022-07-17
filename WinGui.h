@@ -34,6 +34,6 @@ private:
 	static SIZE MainWindowSize; // * Main Window Size *
 	//==================================//
 
-	static Direct2D1 *GraphicsDevice;
+	static std::unique_ptr<Direct2D1>(GraphicsDevice);
 
 };

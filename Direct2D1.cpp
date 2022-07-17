@@ -34,31 +34,32 @@ Direct2D1::Direct2D1(D2D1_FACTORY_TYPE FactoryType)  {
 	HRESULT hResult = S_OK;
 	
 	//========== CREATE FACTORY ==========//
-	hResult = D2D1CreateFactory(FactoryType, factory_options, m_d2d1Factory.ReleaseAndGetAddressOf());
+	hResult = D2D1CreateFactory(FactoryType, factory_options, m_d2d1Factory.GetAddressOf());
 	if (FAILED(hResult)) {
 		throw(std::runtime_error(GetHRESULTErrorMessage(hResult)));
 	}
 
 	//========== RENDER TARGET PROPERTIES ==========//
-	D2D1_RENDER_TARGET_PROPERTIES render_target_properties{};
-	render_target_properties.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
-	render_target_properties.pixelFormat = { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED };
-	render_target_properties.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
-	render_target_properties.dpiX = 0.0F; render_target_properties.dpiY = 0.0F;
-	render_target_properties.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+	D2D1_RENDER_TARGET_PROPERTIES render_target_properties = {
+		.type = D2D1_RENDER_TARGET_TYPE_DEFAULT,
+		.pixelFormat = { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED },
+		.dpiX = 0.0F, .dpiY = 0.0F,
+		.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE,
+		.minLevel = D2D1_FEATURE_LEVEL_DEFAULT
+	};
 
 	//========== CREATE RENDER TARGET ==========//
-	hResult = m_d2d1Factory->CreateDCRenderTarget(&render_target_properties, m_dcRenderTarget.ReleaseAndGetAddressOf());
+	hResult = m_d2d1Factory->CreateDCRenderTarget(&render_target_properties, m_dcRenderTarget.GetAddressOf());
 	if (FAILED(hResult)) {
 		throw(std::runtime_error(GetHRESULTErrorMessage(hResult)));
 	}
 
 }
 
-void Direct2D1::BeginDraw(HDC hdc, const RECT &DrawRect, D2D1_COLOR_F ClearColor) {
+void Direct2D1::BeginDraw(HDC hdc, const RECT &DrawRect, const D2D1_COLOR_F &ClearColor) {
 
 	//========== CREATE RENDER TARGET RESOURCES ==========//
-	m_dcRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.0F, 0.0F, 0.0F), m_dcSolidColorBrush.ReleaseAndGetAddressOf());
+	m_dcRenderTarget->CreateSolidColorBrush(D2D1::ColorF(0.0F, 0.0F, 0.0F), m_dcSolidColorBrush.GetAddressOf());
 
 	//========== BEGIN DRAW ==========//
 	m_dcRenderTarget->BindDC(hdc, &DrawRect);
@@ -78,12 +79,13 @@ void Direct2D1::EndDraw(void) {
 	if (hResult == D2DERR_RECREATE_TARGET) {
 
 		//========== RENDER TARGET PROPERTIES ==========//
-		D2D1_RENDER_TARGET_PROPERTIES render_target_properties{};
-		render_target_properties.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
-		render_target_properties.pixelFormat = { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED };
-		render_target_properties.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE;
-		render_target_properties.dpiX = 0.0F; render_target_properties.dpiY = 0.0F;
-		render_target_properties.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+		D2D1_RENDER_TARGET_PROPERTIES render_target_properties = {
+			.type = D2D1_RENDER_TARGET_TYPE_DEFAULT,
+			.pixelFormat = { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED },
+			.dpiX = 0.0F, .dpiY = 0.0F,
+			.usage = D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE,
+			.minLevel = D2D1_FEATURE_LEVEL_DEFAULT
+		};
 		
 		//========== RECREATE RENDER TARGET ==========//
 		m_d2d1Factory->CreateDCRenderTarget(&render_target_properties, m_dcRenderTarget.ReleaseAndGetAddressOf());
@@ -92,55 +94,100 @@ void Direct2D1::EndDraw(void) {
 
 }
 
-void Direct2D1::DrawGeometry(const std::vector<VERTEX> &Vertecies, D2D1_COLOR_F Color, FILLMODE Mode/*= FILLMODE::DRAW*/,
+void Direct2D1::CreatePathGeometry(const std::vector<VERTEX_2F> &VertexBuffer, ID2D1PathGeometry **PathGeometry) {
+
+	Microsoft::WRL::ComPtr<ID2D1GeometrySink> d2d1GeometrySink;
+
+	m_d2d1Factory->CreatePathGeometry(PathGeometry);
+	(*PathGeometry)->Open(d2d1GeometrySink.GetAddressOf());
+
+	for (size_t i = 0; i < VertexBuffer.size(); i++) {
+
+		if (i == 0) {
+			d2d1GeometrySink->BeginFigure({ VertexBuffer[i].x, VertexBuffer[i].y }, D2D1_FIGURE_BEGIN_FILLED);
+		} else {
+			d2d1GeometrySink->AddLine({ VertexBuffer[i].x, VertexBuffer[i].y });
+		}
+
+	}
+
+	d2d1GeometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
+	d2d1GeometrySink->Close();
+
+}
+
+void Direct2D1::DrawGeometry(const std::vector<VERTEX_2F> &VertexBuffer, const D2D1_COLOR_F &Color,
 	FLOAT strokeWidth/*= 1.0F*/, const D2D1_MATRIX_3X2_F *Transform/*= nullptr*/) {
 
-	if (!Vertecies.empty()) {
+	if (!VertexBuffer.empty()) {
 
 		Microsoft::WRL::ComPtr<ID2D1PathGeometry> d2d1PathGeometry;
-		Microsoft::WRL::ComPtr<ID2D1GeometrySink> d2d1GeometrySink;
 
 		//========== CREATE GEOMETRY ==========//
 
-		m_d2d1Factory->CreatePathGeometry(d2d1PathGeometry.ReleaseAndGetAddressOf());
-		d2d1PathGeometry->Open(d2d1GeometrySink.ReleaseAndGetAddressOf());
-
-		for (size_t i = 0; i < Vertecies.size(); i++) {
-
-			i == 0 ? d2d1GeometrySink->BeginFigure({ Vertecies[i].x, Vertecies[i].y }, D2D1_FIGURE_BEGIN_FILLED) :
-				d2d1GeometrySink->AddLine({ Vertecies[i].x, Vertecies[i].y });
-
-		}
-
-		d2d1GeometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
-		d2d1GeometrySink->Close();
+		this->CreatePathGeometry(VertexBuffer, d2d1PathGeometry.GetAddressOf());
 
 		//========== DRAW GEOMETRY ==========//
 
 		m_dcSolidColorBrush->SetColor(Color);
 
-		D2D1_MATRIX_3X2_F OldTransform = { 0 };
+		D2D1_MATRIX_3X2_F PrevTransform = { 0 };
 
 		if (Transform != nullptr) {
-			m_dcRenderTarget->GetTransform(&OldTransform);
+			
+			m_dcRenderTarget->GetTransform(&PrevTransform);
 			m_dcRenderTarget->SetTransform(Transform);
-		}
-
-		if (Mode == FILLMODE::DRAW) {
+			
 			m_dcRenderTarget->DrawGeometry(d2d1PathGeometry.Get(), m_dcSolidColorBrush.Get(), strokeWidth);
-		} else if (Mode == FILLMODE::FILL) {
-			m_dcRenderTarget->FillGeometry(d2d1PathGeometry.Get(), m_dcSolidColorBrush.Get());
-		}
+			
+			m_dcRenderTarget->SetTransform(&PrevTransform);
+		
+		} else {
 
-		if (Transform != nullptr) {
-			m_dcRenderTarget->GetTransform(&OldTransform);
+			m_dcRenderTarget->DrawGeometry(d2d1PathGeometry.Get(), m_dcSolidColorBrush.Get(), strokeWidth);
+
 		}
 
 	}
 	
 }
 
-void Direct2D1::DrawEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLOAT RadiusY, const D2D1_COLOR_F &Color, FILLMODE Mode/* = FILLMODE::DRAW*/,
+void Direct2D1::FillGeometry(const std::vector<VERTEX_2F> &VertexBuffer, const D2D1_COLOR_F &Color, const D2D1_MATRIX_3X2_F *Transform/*= nullptr*/) {
+
+	if (!VertexBuffer.empty()) {
+
+		Microsoft::WRL::ComPtr<ID2D1PathGeometry> d2d1PathGeometry;
+
+		//========== CREATE GEOMETRY ==========//
+
+		this->CreatePathGeometry(VertexBuffer, d2d1PathGeometry.GetAddressOf());
+
+		//========== DRAW GEOMETRY ==========//
+
+		m_dcSolidColorBrush->SetColor(Color);
+
+		D2D1_MATRIX_3X2_F PrevTransform = { 0 };
+
+		if (Transform != nullptr) {
+
+			m_dcRenderTarget->GetTransform(&PrevTransform);
+			m_dcRenderTarget->SetTransform(Transform);
+
+			m_dcRenderTarget->FillGeometry(d2d1PathGeometry.Get(), m_dcSolidColorBrush.Get());
+
+			m_dcRenderTarget->SetTransform(&PrevTransform);
+
+		} else {
+
+			m_dcRenderTarget->FillGeometry(d2d1PathGeometry.Get(), m_dcSolidColorBrush.Get());
+
+		}
+
+	}
+
+}
+
+void Direct2D1::DrawEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLOAT RadiusY, const D2D1_COLOR_F &Color,
 	FLOAT strokeWidth/*= 1.0F*/, const D2D1_MATRIX_3X2_F *Transform/*= nullptr*/) {
 
 	m_dcSolidColorBrush->SetColor(Color);
@@ -151,21 +198,51 @@ void Direct2D1::DrawEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLO
 		.radiusY = RadiusY
 	};
 
-	D2D1_MATRIX_3X2_F OldTransform = { 0 };
 
 	if (Transform != nullptr) {
-		m_dcRenderTarget->GetTransform(&OldTransform);
+		
+		D2D1_MATRIX_3X2_F PrevTransform = { 0 };
+		m_dcRenderTarget->GetTransform(&PrevTransform);
 		m_dcRenderTarget->SetTransform(Transform);
+		
+		m_dcRenderTarget->DrawEllipse(ellipse, m_dcSolidColorBrush.Get(), strokeWidth);
+		
+		m_dcRenderTarget->SetTransform(PrevTransform);
+
+	} else {
+
+		m_dcRenderTarget->DrawEllipse(ellipse, m_dcSolidColorBrush.Get(), strokeWidth);
+	
 	}
 
-	if (Mode == FILLMODE::DRAW) {
-		m_dcRenderTarget->DrawEllipse(ellipse, m_dcSolidColorBrush.Get(), strokeWidth);
-	} else if (Mode == FILLMODE::FILL) {
-		m_dcRenderTarget->FillEllipse(ellipse, m_dcSolidColorBrush.Get());
-	}
+}
+
+void Direct2D1::FillEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLOAT RadiusY, const D2D1_COLOR_F &Color,
+	const D2D1_MATRIX_3X2_F *Transform/*= nullptr*/) {
+
+	m_dcSolidColorBrush->SetColor(Color);
+
+	D2D1_ELLIPSE ellipse = {
+		.point = centerPoint,
+		.radiusX = RadiusX,
+		.radiusY = RadiusY
+	};
+
 
 	if (Transform != nullptr) {
-		m_dcRenderTarget->SetTransform(OldTransform);
+
+		D2D1_MATRIX_3X2_F PrevTransform = { 0 };
+		m_dcRenderTarget->GetTransform(&PrevTransform);
+		m_dcRenderTarget->SetTransform(Transform);
+
+		m_dcRenderTarget->FillEllipse(ellipse, m_dcSolidColorBrush.Get());
+
+		m_dcRenderTarget->SetTransform(PrevTransform);
+
+	} else {
+
+		m_dcRenderTarget->FillEllipse(ellipse, m_dcSolidColorBrush.Get());
+
 	}
 
 }

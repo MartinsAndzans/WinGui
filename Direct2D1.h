@@ -26,16 +26,14 @@
 #define D2D1GetGValue(rgb) (BYTE)((rgb) >> 8)
 #define D2D1GetBValue(rgb) (BYTE)((rgb))
 
-#define D2D1ScreenToLocal(p1, p2) p2.x -= p1.x; p1.x = 0; p2.y -= p1.y * (-1); p1.y = 0;
-
 // # Geometry Vertex #
-struct VERTEX {
+struct VERTEX_2F {
 	
-	VERTEX()
+	VERTEX_2F()
 		: x(0.0F), y(0.0F)
 	{ /*...*/ }
 
-	VERTEX(FLOAT _x, FLOAT _y)
+	VERTEX_2F(FLOAT _x, FLOAT _y)
 		: x(_x), y(_y)
 	{ /*...*/ }
 	
@@ -55,30 +53,28 @@ private:
 
 };
 
-// # Fill Modes # 
-enum class FILLMODE {
-	DRAW = 0x05,
-	FILL = 0x0F
-};
-
 class Direct2D1 {
 public:
 
 	explicit Direct2D1(D2D1_FACTORY_TYPE FactoryType);
 	Direct2D1(const Direct2D1 &other) = delete;
 
-	void BeginDraw(HDC hdc, const RECT &DrawRect, D2D1_COLOR_F ClearColor);
+	void BeginDraw(HDC hdc, const RECT &DrawRect, const D2D1_COLOR_F &ClearColor);
 	void EndDraw(void);
 
-	void DrawGeometry(const std::vector<VERTEX> &Vertecies, D2D1_COLOR_F Color, FILLMODE  Mode = FILLMODE::DRAW,
-		FLOAT strokeWidth = 1.0F, const D2D1_MATRIX_3X2_F *Transform = nullptr);
+	void DrawGeometry(const std::vector<VERTEX_2F> &VertexBuffer, const D2D1_COLOR_F &Color, FLOAT strokeWidth = 1.0F, const D2D1_MATRIX_3X2_F *Transform = nullptr);
+	void FillGeometry(const std::vector<VERTEX_2F> &VertexBuffer, const D2D1_COLOR_F &Color, const D2D1_MATRIX_3X2_F *Transform = nullptr);
 
-	void DrawEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLOAT RadiusY, const D2D1_COLOR_F &Color, FILLMODE Mode = FILLMODE::DRAW,
-		FLOAT strokeWidth = 1.0F, const D2D1_MATRIX_3X2_F *Transform = nullptr);
-	
+	void DrawEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLOAT RadiusY, const D2D1_COLOR_F &Color, FLOAT strokeWidth = 1.0F, const D2D1_MATRIX_3X2_F *Transform = nullptr);
+	void FillEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLOAT RadiusY, const D2D1_COLOR_F &Color, const D2D1_MATRIX_3X2_F *Transform = nullptr);
+
 	void DrawBitmap(D2D1_RECT_F Rect, const D2D1Bitmap &Bitmap, INT32 Frame = 0, const D2D1_MATRIX_3X2_F *Transform = nullptr);
 
 	~Direct2D1(void) noexcept = default;
+
+private:
+
+	void CreatePathGeometry(const std::vector<VERTEX_2F> &VertexBuffer, ID2D1PathGeometry **PathGeometry);
 
 private:
 

@@ -86,23 +86,43 @@ private:
 
 };
 
-typedef struct TRIANGLE {
-	POINT Vertex1;
-	POINT Vertex2;
-	POINT Vertex3;
-}*LPTRIANGLE;
+struct VERTEX {
+	
+	VERTEX()
+		: x(0), y(0)
+	{ /*...*/ }
+	
+	VERTEX(INT32 _x, INT32 _y)
+		: x(_x), y(_y)
+	{ /*...*/ }
 
-typedef struct POINT3D {
-	INT32 X;
-	INT32 Y;
-	INT32 Z;
-}*LPPOINT3D;
+	INT32 x;
+	INT32 y;
+
+};
+
+struct TRIANGLE {
+
+	TRIANGLE()
+		: Vertex1({ }), Vertex2({ }), Vertex3({ })
+	{ /*...*/
+	}
+
+	TRIANGLE(VERTEX _Vertex1, VERTEX _Vertex2, VERTEX _Vertex3)
+		: Vertex1(_Vertex1), Vertex2(_Vertex2), Vertex3(_Vertex3)
+	{ /*...*/ }
+
+	VERTEX Vertex1;
+	VERTEX Vertex2;
+	VERTEX Vertex3;
+
+};
 
 struct GdiPlus {
 
 	#pragma region DrawFigures
 
-	static void DrawLine(HDC hdc, const POINT &lineBegin, const POINT &lineEnd, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+	static void DrawLine(HDC hdc, const VERTEX &lineBegin, const VERTEX &lineEnd, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -167,7 +187,7 @@ struct GdiPlus {
 		
 	}
 
-	static void DrawCircle(HDC hdc, const POINT &centerPoint, UINT32 radius, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+	static void DrawCircle(HDC hdc, const VERTEX &centerPoint, UINT32 radius, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
 		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
@@ -186,9 +206,9 @@ struct GdiPlus {
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
 
 		POINT TriangleVertices[] = {
-			triangle.Vertex1,
-			triangle.Vertex2,
-			triangle.Vertex3
+			{ triangle.Vertex1.x, triangle.Vertex1.y },
+			{ triangle.Vertex2.x, triangle.Vertex2.y },
+			{ triangle.Vertex3.x, triangle.Vertex3.y }
 		};
 
 		BYTE VerticesTypes[] = {
@@ -236,17 +256,17 @@ struct GdiPlus {
 
 	#pragma region DrawImages
 
-	// # This Function Draw Image From File With This Extensions <.bmp; .png> #
+	// # This Function Draw Image From File With <.bmp> Extension #
 	// ## Type 'f' - Load Image From File | Type 'r' - Load Image From Resource ##
-	static bool DrawImage(HDC hdc, LPCWSTR FileName, CHAR Type, INT32 X, INT32 Y, INT32 Width, INT32 Height) noexcept {
+	static bool DrawImage(HDC hdc, std::wstring_view FileName, CHAR Type, INT32 X, INT32 Y, INT32 Width, INT32 Height) noexcept {
 
 		HANDLE ImageBitmap = NULL;
 		
 		if (Type == 'f') {
-			ImageBitmap = LoadImageW(NULL, FileName, IMAGE_BITMAP, Width, Height, LR_LOADFROMFILE | LR_VGACOLOR); // # Load Image #
+			ImageBitmap = LoadImageW(NULL, FileName.data(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_VGACOLOR); // # Load Image #
 		} else if (Type == 'r') {
 			HINSTANCE hInstance = GetModuleHandle(NULL);
-			ImageBitmap = LoadImageW(hInstance, FileName, IMAGE_BITMAP, Width, Height, LR_VGACOLOR); // # Load Image Resource #
+			ImageBitmap = LoadImageW(hInstance, FileName.data(), IMAGE_BITMAP, 0, 0, LR_VGACOLOR); // # Load Image Resource #
 		}
 
 		if (ImageBitmap == NULL) {
@@ -256,7 +276,7 @@ struct GdiPlus {
 		HDC BitmapDC = CreateCompatibleDC(hdc);
 
 		HGDIOBJ PrevBitmap = SelectObject(BitmapDC, ImageBitmap);
-		BitBlt(hdc, X, Y, Width, Height, BitmapDC, 0, 0, SRCCOPY); // # Draw Image #
+		BitBlt(hdc, X, Y, Width, Height, BitmapDC, Width, Height, SRCCOPY); // # Draw Image #
 		SelectObject(BitmapDC, PrevBitmap);
 
 		DeleteDC(BitmapDC);
@@ -277,7 +297,7 @@ struct GdiPlus {
 		HGDIOBJ PrevBrush = SelectObject(hdc, FillBrush);
 
 		FillRect(hdc, &rect, FillBrush);
-
+		
 		SelectObject(hdc, PrevBrush);
 		DeleteObject(FillBrush);
 
@@ -297,16 +317,19 @@ struct GdiPlus {
 	}
 
 	template<size_t ArraySize>
-	static void FillGradient(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, const std::array<ColorU, ArraySize> &ColorCollection) noexcept {
-
-		#define MAKECOLOR16(Byte) (COLOR16)(Byte) << 8
+	static void FillGradientH(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, const std::array<ColorU, ArraySize> &ColorCollection) noexcept {
 
 		static_assert(ArraySize >= 2, "In \"ColorCollection\" Array Must Be Minimum TWO Colors");
 
-		const INT32 GradientWidth = Width / (ArraySize - 1); // * Gradient Width Between 2 Colors *
+		HDC MemoryDC = CreateCompatibleDC(hdc);
+		HBITMAP Bitmap = CreateCompatibleBitmap(hdc, Width, Height);
 
-		INT32 GradientBegin = X; // * Gradient Starting Point *
-		INT32 GradientEnd = X + GradientWidth; // * Gradient Ending Point *
+		HGDIOBJ PrevBitmap = SelectObject(MemoryDC, Bitmap);
+
+		const INT32 GradientWidth = Width / (ArraySize - 1); // * Gradient Width Between TWO Colors *
+
+		INT32 GradientBegin = 0; // * Gradient Starting Point *
+		INT32 GradientEnd = GradientWidth; // * Gradient Ending Point *
 
 		for (size_t i = 0; i < ArraySize - 1; i++) {
 			
@@ -316,17 +339,17 @@ struct GdiPlus {
 				#pragma warning(disable:4838)
 				
 				{
-					GradientBegin, Y,                                 // X, Y
-					MAKECOLOR16(GetRValue(ColorCollection[i].get())), // Red
-					MAKECOLOR16(GetGValue(ColorCollection[i].get())), // Green
-					MAKECOLOR16(GetBValue(ColorCollection[i].get()))  // Blue
+					GradientBegin, 0,                         // X, Y
+					GetRValue(ColorCollection[i].get()) << 8, // Red
+					GetGValue(ColorCollection[i].get()) << 8, // Green
+					GetBValue(ColorCollection[i].get()) << 8  // Blue
 				},
 
 				{
-					GradientEnd, Y + Height,                              // X, Y
-					MAKECOLOR16(GetRValue(ColorCollection[i + 1].get())), // Red
-					MAKECOLOR16(GetGValue(ColorCollection[i + 1].get())), // Green
-					MAKECOLOR16(GetBValue(ColorCollection[i + 1].get()))  // Blue
+					GradientEnd, Height,                      // X, Y
+					GetRValue(ColorCollection[i + 1].get()) << 8, // Red
+					GetGValue(ColorCollection[i + 1].get()) << 8, // Green
+					GetBValue(ColorCollection[i + 1].get()) << 8  // Blue
 				}
 
 				#pragma warning(default:4838)
@@ -334,34 +357,79 @@ struct GdiPlus {
 			
 			GRADIENT_RECT GradientRect[] = { { 0, 1 } };
 
-			GradientFill(hdc, Gradient, ARRAYSIZE(Gradient), GradientRect, ARRAYSIZE(GradientRect), GRADIENT_FILL_RECT_H);
+			GradientFill(MemoryDC, Gradient, ARRAYSIZE(Gradient), GradientRect, ARRAYSIZE(GradientRect), GRADIENT_FILL_RECT_H);
 
 			GradientBegin += GradientWidth;
 			GradientEnd += GradientWidth;
 
 		}
 
-		#undef MAKECOLOR16
+		BitBlt(hdc, X, Y, Width, Height, MemoryDC, Width, Height, SRCCOPY);
+
+		SelectObject(MemoryDC, PrevBitmap);
+		
+		DeleteDC(MemoryDC);
+		DeleteObject(Bitmap);
+
+	}
+
+	template<size_t ArraySize>
+	static void FillGradientV(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, const std::array<ColorU, ArraySize> &ColorCollection) {
+
+		static_assert(ArraySize >= 2, "In \"ColorCollection\" Array Must Be Minimum TWO Colors");
+
+		HDC MemoryDC = CreateCompatibleDC(hdc);
+		HBITMAP Bitmap = CreateCompatibleBitmap(hdc, Width, Height);
+
+		HGDIOBJ PrevBitmap = SelectObject(MemoryDC, Bitmap);
+
+		const INT32 GradientHeight = Height / (ArraySize - 1); // * Gradient Height Between TWO Colors *
+
+		INT32 GradientBegin = 0; // * Gradient Starting Point *
+		INT32 GradientEnd = GradientHeight; // * Gradient Ending Point *
+
+		for (size_t i = 0; i < ArraySize - 1; i++) {
+
+			// COLOR16 0x0000 - # (COLOR16)(0xFF) << 8 : 0xFF00 #
+
+			TRIVERTEX Gradient[] = {
+				#pragma warning(disable:4838)
+
+				{
+					0, GradientBegin,                         // X, Y
+					GetRValue(ColorCollection[i].get()) << 8, // Red
+					GetGValue(ColorCollection[i].get()) << 8, // Green
+					GetBValue(ColorCollection[i].get()) << 8  // Blue
+				},
+
+				{
+					Width, GradientEnd,                       // X, Y
+					GetRValue(ColorCollection[i + 1].get()) << 8, // Red
+					GetGValue(ColorCollection[i + 1].get()) << 8, // Green
+					GetBValue(ColorCollection[i + 1].get()) << 8  // Blue
+				}
+
+				#pragma warning(default:4838)
+			};
+
+			GRADIENT_RECT GradientRect[] = { { 0, 1 } };
+
+			GradientFill(MemoryDC, Gradient, ARRAYSIZE(Gradient), GradientRect, ARRAYSIZE(GradientRect), GRADIENT_FILL_RECT_V);
+
+			GradientBegin += GradientHeight;
+			GradientEnd += GradientHeight;
+
+		}
+
+		BitBlt(hdc, X, Y, Width, Height, MemoryDC, Width, Height, SRCCOPY);
+
+		SelectObject(MemoryDC, PrevBitmap);
+
+		DeleteDC(MemoryDC);
+		DeleteObject(Bitmap);
 
 	}
 
 	#pragma endregion
-
-	#pragma region 3DFigures
-
-	static void DrawCube(HDC hdc, POINT3D centerPoint, UINT32 radius, UINT16 cameraAngle, ColorU strokeColor = ColorU(ColorU::Enum::DarkBlue), UINT32 strokeWidth = 1U) {
-
-		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
-		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
-
-
-
-		SelectObject(hdc, PrevPen);
-		DeleteObject(StrokePen);
-
-	}
-
-	#pragma endregion
-
 
 };

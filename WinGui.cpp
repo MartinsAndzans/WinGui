@@ -5,20 +5,19 @@ HWND WinGui::hMainWindow = NULL; // * Handle to Main Window *
 SIZE WinGui::MainWindowSize = { 0 }; // * Main Window Size *
 //==================================//
 
-Direct2D1 *WinGui::GraphicsDevice = nullptr;
+std::unique_ptr<Direct2D1> WinGui::GraphicsDevice;
 
 bool WinGui::wCreateMainWindow(_In_ LPCWSTR WindowTitle, _In_ INT32 Width, _In_ INT32 Height, _In_ INT nCmdShow) noexcept {
 	
 	HINSTANCE hInstance = GetModuleHandle(NULL); // * Instance of Application *
-	constexpr LPCWSTR ClassName = L"MainClass"; // * Main Window Class *
-
-	WinGui::MainWindowSize = { Width, Height };
+	constexpr wchar_t ClassName[] = L"DirectX 2D Window Class";
+	
 
 	//===== Create Main Window Class =====//
 	WNDCLASSEXW wcex = { 0 };
 	wcex.cbSize = sizeof(WNDCLASSEXW);
 	wcex.hbrBackground = NULL;
-	wcex.hCursor = LoadCursor(hInstance, MAKEINTRESOURCE(IDC_MAINCURSOR));
+	wcex.hCursor = LoadCursor(NULL, IDC_CROSS);
 	wcex.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MAINICON));
 	wcex.hInstance = hInstance;
 	wcex.lpfnWndProc = WindowProc;
@@ -32,8 +31,21 @@ bool WinGui::wCreateMainWindow(_In_ LPCWSTR WindowTitle, _In_ INT32 Width, _In_ 
 	}
 	//====================================//
 
+	WinGui::MainWindowSize = { Width, Height };
+	
 	INT32 X = GetSystemMetrics(SM_CXSCREEN) / 2 - WinGui::MainWindowSize.cx / 2; // * Window X Position *
-	INT32 Y = GetSystemMetrics(SM_CYSCREEN) / 2 - WinGui::MainWindowSize.cy / 2; // * Window Y Position *
+	INT32 Y = GetSystemMetrics(SM_CYSCREEN) / 2 - WinGui::MainWindowSize.cy / 2; // * Window Y Position *	
+
+	RECT WindowRect = {
+		.left = X,
+		.top = Y,
+		.right = X + Width,
+		.bottom = Y + Height
+	};
+
+	WinGui::MainWindowSize = { WindowRect.right - WindowRect.left, WindowRect.bottom - WindowRect.top };
+
+	AdjustWindowRect(&WindowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
 	//======== Create Main Window ========//
 	WinGui::hMainWindow = CreateWindowExW(
@@ -41,7 +53,10 @@ bool WinGui::wCreateMainWindow(_In_ LPCWSTR WindowTitle, _In_ INT32 Width, _In_ 
 		ClassName,
 		WindowTitle,
 		WS_OVERLAPPEDWINDOW,
-		X, Y, WinGui::MainWindowSize.cx, WinGui::MainWindowSize.cy,
+		WindowRect.left,
+		WindowRect.top,
+		WindowRect.right - WindowRect.left,
+		WindowRect.bottom - WindowRect.top,
 		HWND_DESKTOP,
 		NULL,
 		hInstance,
@@ -78,9 +93,6 @@ enum class Fade { out, in };
 static Fade state = Fade::out;
 static COLORREF Color = D2D1RGB(0, 0, 255);
 
-static BOOL Reset = FALSE;
-static D2D1_POINT_2F circle_point = { 124.0F, 124.0F };
-
 LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, LPARAM lParam) {
 
 	switch (Msg) {
@@ -88,7 +100,7 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 	{
 
 		try {
-			GraphicsDevice = new Direct2D1(D2D1_FACTORY_TYPE_SINGLE_THREADED);
+			GraphicsDevice = std::make_unique<Direct2D1>(D2D1_FACTORY_TYPE_SINGLE_THREADED);
 		} catch (std::runtime_error &e) {
 			MessageBoxA(hMainWindow, e.what(), "DirectX 2D Error", MB_ICONERROR);
 			return -1;
@@ -99,6 +111,10 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 
 		INT16 FrameRate = (INT16)(1000.0F / 60.0F);
 		SetTimer(hMainWindow, 0xFF, FrameRate, NULL);
+
+		SYSTEMTIME st = { 0 };
+		GetSystemTime(&st);
+		srand(st.wMilliseconds);
 
 		return 0;
 		
@@ -124,6 +140,10 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 	case WM_PAINT:
 	{
 
+		if (IsIconic(hMainWindow)) {
+			return 0;
+		}
+
 		RECT rect = { 0 };
 		PAINTSTRUCT ps = { 0 };
 
@@ -138,47 +158,66 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 			Color = D2D1RGB(D2D1GetRValue(Color), D2D1GetGValue(Color), D2D1GetBValue(Color) + 0x05);
 		}
 
-		enum class MOVE { UP, DOWN };
+		POINT CursorPos = { 0 };
+		GetCursorPos(&CursorPos);
+		ScreenToClient(hMainWindow, &CursorPos);
 
-		static FLOAT Speed = 0.0F, Acelaration = 2.0F;
-		static MOVE state = MOVE::DOWN;
+		static std::vector<VERTEX_2F> Stars;
+		static std::vector<VERTEX_2F> Spawners;
 
-		if (Reset == TRUE) {
-			Speed = 0.0F;
-			circle_point.y = 124.0F;
-			state = MOVE::DOWN;
-			Reset = FALSE;
+		/*for (size_t i = 0; i < 2; i++) {
+			Stars.push_back({ (FLOAT)(rand() % rect.right), -20.0F });
+		}*/
+
+		if (GetAsyncKeyState(VK_LBUTTON) && CursorPos.x >= rect.left && CursorPos.x <= rect.right &&
+			CursorPos.y >= rect.top && CursorPos.y <= rect.bottom &&
+			GetFocus() == hMainWindow) {
+			Stars.push_back({ (FLOAT)(CursorPos.x), (FLOAT)(CursorPos.y) });
 		}
 
-		if (state == MOVE::DOWN) {
-			circle_point.y += Speed;
-			Speed += Acelaration;
-		} else if (state == MOVE::UP) {
-			circle_point.y -= Speed;
-			Speed -= Acelaration * 2.0F;
+		if (GetAsyncKeyState(VK_RBUTTON) && CursorPos.x >= rect.left && CursorPos.x <= rect.right &&
+			CursorPos.y >= rect.top && CursorPos.y <= rect.bottom &&
+			GetFocus() == hMainWindow) {
+			Spawners.push_back({ (FLOAT)(CursorPos.x), (FLOAT)(CursorPos.y) });
 		}
 
-		if (circle_point.y + 100.0F - 10.0F >= rect.bottom) {
-			state = MOVE::UP;
-		} else if (Speed <= 0.0F) {
-			state = MOVE::DOWN;
+		if (GetAsyncKeyState(VK_SPACE) && GetFocus() == hMainWindow) {
+			Spawners.clear();
 		}
 
-		std::vector<VERTEX> Rect = {
-			VERTEX(10.0F, 10.0F),
-			VERTEX((FLOAT)(rect.right) - 10.0F, 10.0F),
-			VERTEX((FLOAT)(rect.right) - 10.0F, (FLOAT)(rect.bottom) - 10.0F),
-			VERTEX(10.0F, (FLOAT)(rect.bottom) - 10.0F)
-		};
+		for (size_t i = 0; i < Spawners.size(); i++) {
+			printf_s("X: %.2f\tY: %.2f\n", Spawners[i].x, Spawners[i].y);
+			Stars.push_back({ Spawners[i].x, Spawners[i].y });
+		}
+
+		for (size_t i = 0; i < Stars.size(); i++) {
+
+			if (Stars[i].y >= rect.bottom) {
+				Stars.erase(Stars.begin() + i);
+				Stars.shrink_to_fit();
+				i--;
+				continue;
+			}
+
+			switch (rand() % 2) {
+			case 0:
+				Stars[i].x += 10.0F;
+				break;
+			case 1:
+				Stars[i].x -= 10.0F;
+				break;
+			}
+
+			Stars[i].y += 10.0F;
+
+		}
 
 		GraphicsDevice->BeginDraw(WindowDC, rect, D2D1::ColorF(Color));
 
-		// # Bouncing Ball #
-		GraphicsDevice->DrawEllipse(circle_point, 100.0F, 100.0F, D2D1::ColorF(D2D1::ColorF::LightSkyBlue), FILLMODE::FILL);
-		// # Geometry Test #
-		GraphicsDevice->DrawGeometry(Rect, D2D1::ColorF(D2D1RGB(0, 145, 0)), FILLMODE::DRAW, 4.0F);
-
-
+		for (size_t i = 0; i < Stars.size(); i++) {
+			D2D1_POINT_2F Point = { Stars[i].x, Stars[i].y};
+			GraphicsDevice->FillEllipse(Point, 4.0F, 4.0F, D2D1::ColorF(D2D1RGB(255, 255, 255)));
+		}
 
 		GraphicsDevice->EndDraw();
 
@@ -189,13 +228,6 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 	}
 	case WM_KEYDOWN:
 	{
-		if (wParam == VK_SPACE) {
-			Reset = TRUE;
-		} else if (wParam == VK_RIGHT) {
-			circle_point.x += 10.0F;
-		} else if (wParam == VK_LEFT) {
-			circle_point.x -= 10.0F;
-		}
 		return 0;
 	}
 	case WM_GETMINMAXINFO:
@@ -209,7 +241,6 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 			DestroyWindow(hMainWindow);
 		return 0;
 	case WM_DESTROY:
-		delete GraphicsDevice;
 		PostQuitMessage(0);
 		return 0;
 	default:
