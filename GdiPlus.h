@@ -13,10 +13,16 @@
 #define WIN32_LEAN_AND_MEAN
 
 //===== HEADERS ======//
+#include <memory> 
 #include <Windows.h>
 #include <string>
 #include <array>
+#include <vector>
 //====================//
+
+#undef RGB
+// # 0x000000FF - Red / 0x0000FF00 - Green / 0x00FF0000 - Blue #
+#define RGB(r, g, b) (UINT32)(((BYTE)(r))|((WORD)((BYTE)(g)) << 8)|((DWORD)((BYTE)(b)) << 16))
 
 class ColorU {
 public:
@@ -76,7 +82,7 @@ public:
 		m_rgbColor = other.m_rgbColor;
 	}
 
-	UINT32 get(void) const {
+	UINT32 Get(void) const {
 		return m_rgbColor;
 	}
 
@@ -86,45 +92,116 @@ private:
 
 };
 
-struct VERTEX {
+struct GdiObjDel {
+
+	void operator()(HGDIOBJ hGdiObj) {
+		DeleteObject(hGdiObj);
+	}
+
+};
+
+class GdiBrush {
+public:
+
+	// ===== PATTERN BRUSH =====
+	explicit GdiBrush(HBITMAP hBitmap)
+		: m_lpGdiBrush(CreatePatternBrush(hBitmap), GdiObjDel())
+	{ /*...*/ }
+
+	// ===== SOLID BRUSH =====
+	explicit GdiBrush(ColorU Color)
+		: m_lpGdiBrush(CreateSolidBrush(Color.Get()), GdiObjDel())
+	{ /*...*/ }
+
+	// ===== PATTERN BRUSH =====
+	void Set(HBITMAP hBitmap) {
+		m_lpGdiBrush.reset(CreatePatternBrush(hBitmap), GdiObjDel());
+	}
+
+	// ===== SOLID BRUSH =====
+	void Set(ColorU Color) {
+		m_lpGdiBrush.reset(CreateSolidBrush(Color.Get()), GdiObjDel());
+	}
+
+	GdiBrush(const GdiBrush &other) = default;
+
+	HBRUSH Get(void) const {
+		return m_lpGdiBrush.get();
+	}
 	
-	VERTEX()
+
+private:
+
+	std::shared_ptr<HBRUSH__> m_lpGdiBrush;
+
+};
+
+// # Geometry Vertex #
+struct VERTEX_2U {
+	
+	VERTEX_2U()
 		: x(0), y(0)
 	{ /*...*/ }
 	
-	VERTEX(INT32 _x, INT32 _y)
+	VERTEX_2U(INT32 _x, INT32 _y)
 		: x(_x), y(_y)
 	{ /*...*/ }
+
+	VERTEX_2U(const VERTEX_2U &other) = default;
 
 	INT32 x;
 	INT32 y;
 
 };
 
-struct TRIANGLE {
+struct TRIANGLE_3U {
 
-	TRIANGLE()
-		: Vertex1({ }), Vertex2({ }), Vertex3({ })
-	{ /*...*/
-	}
+	TRIANGLE_3U() = default;
 
-	TRIANGLE(VERTEX _Vertex1, VERTEX _Vertex2, VERTEX _Vertex3)
+	TRIANGLE_3U(const VERTEX_2U &_Vertex1, const VERTEX_2U &_Vertex2, const VERTEX_2U &_Vertex3)
 		: Vertex1(_Vertex1), Vertex2(_Vertex2), Vertex3(_Vertex3)
 	{ /*...*/ }
 
-	VERTEX Vertex1;
-	VERTEX Vertex2;
-	VERTEX Vertex3;
+	TRIANGLE_3U(const TRIANGLE_3U &other) = default;
 
+	VERTEX_2U Vertex1;
+	VERTEX_2U Vertex2;
+	VERTEX_2U Vertex3;
+
+};
+
+struct SIZE_2U {
+
+	SIZE_2U()
+		: width(0), height(0)
+	{ /*...*/ }
+
+	SIZE_2U(INT32 _width, INT32 _height)
+		: width(_width), height(_height)
+	{ /*...*/ }
+
+	SIZE_2U(const SIZE_2U &other) = default;
+
+	INT32 width;
+	INT32 height;
+
+};
+
+// # Image Load Properties #
+enum class MODE : UINT16 {
+	LOAD_FROM_FILE = 0x0001,
+	LOAD_FROM_FILE_MONOCHROME = 0x0011,
+	LOAD_FROM_RESOURCE = 0x0002,
+	LOAD_FROM_RESOURCE_MONOCHROME = 0x0022
 };
 
 struct GdiPlus {
 
 	#pragma region DrawFigures
 
-	static void DrawLine(HDC hdc, const VERTEX &lineBegin, const VERTEX &lineEnd, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+	static void DrawLine(HDC hdc, const VERTEX_2U &lineBegin, const VERTEX_2U &lineEnd, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
-		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
+		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.Get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
 
 		MoveToEx(hdc, lineBegin.x, lineBegin.y, nullptr); // # Move to starting point #
@@ -135,61 +212,9 @@ struct GdiPlus {
 
 	}
 
-	static void DrawRectangle(HDC hdc, const RECT &rect, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+	static void DrawCircle(HDC hdc, const VERTEX_2U &centerPoint, UINT32 radius, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
-		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
-		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
-
-		POINT RectangleVertices[] = {
-			{ rect.left, rect.top },
-			{ rect.right, rect.top },
-			{ rect.right, rect.bottom },
-			{ rect.left, rect.bottom }
-		};
-
-		BYTE VerticesTypes[] = {
-			PT_MOVETO,
-			PT_LINETO,
-			PT_LINETO,
-			PT_LINETO | PT_CLOSEFIGURE
-		};
-
-		PolyDraw(hdc, RectangleVertices, VerticesTypes, ARRAYSIZE(RectangleVertices));
-
-		SelectObject(hdc, PrevPen);
-		DeleteObject(StrokePen);
-
-	}
-	
-	static void DrawRectangle(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U){
-		
-		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
-		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
-		
-		POINT RectangleVertices[] = {
-			{ X, Y },
-			{ X + Width, Y },
-			{ X + Width, Y + Height },
-			{ X, Y + Height }
-		};
-		
-		BYTE VerticesTypes[] = {
-			PT_MOVETO,
-			PT_LINETO,
-			PT_LINETO,
-			PT_LINETO | PT_CLOSEFIGURE
-		};
-		
-		PolyDraw(hdc, RectangleVertices, VerticesTypes, ARRAYSIZE(RectangleVertices));
-		
-		SelectObject(hdc, PrevPen);
-		DeleteObject(StrokePen);
-		
-	}
-
-	static void DrawCircle(HDC hdc, const VERTEX &centerPoint, UINT32 radius, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
-
-		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
+		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.Get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
 
 		MoveToEx(hdc, centerPoint.x + radius, centerPoint.y, nullptr); // # Move to starting point of a circle #
@@ -200,9 +225,9 @@ struct GdiPlus {
 
 	}
 
-	static void DrawTriangle(HDC hdc, const TRIANGLE &triangle, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
+	static void DrawTriangle(HDC hdc, const TRIANGLE_3U &triangle, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 		
-		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
+		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.Get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
 
 		POINT TriangleVertices[] = {
@@ -226,7 +251,7 @@ struct GdiPlus {
 
 	static void DrawStar(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU strokeColor = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1U) noexcept {
 
-		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.get());
+		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, strokeColor.Get());
 		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
 
 		POINT StarVertices[] = {
@@ -254,72 +279,142 @@ struct GdiPlus {
 
 	#pragma endregion
 
-	#pragma region DrawImages
+	static void DrawRectangle(HDC hdc, const VERTEX_2U &Position, const SIZE_2U &Size,
+		const ColorU &Color = ColorU::Enum::DarkBlue, UINT32 strokeWidth = 1) noexcept {
 
-	// # This Function Draw Image From File With <.bmp> Extension #
-	// ## Type 'f' - Load Image From File | Type 'r' - Load Image From Resource ##
-	static bool DrawImage(HDC hdc, std::wstring_view FileName, CHAR Type, INT32 X, INT32 Y, INT32 Width, INT32 Height) noexcept {
+		HPEN StrokePen = CreatePen(PS_SOLID, strokeWidth, Color.Get());
+		HGDIOBJ PrevPen = SelectObject(hdc, StrokePen);
+
+		POINT PointBuffer[] = {
+			{ Position.x, Position.y },
+			{ Position.x + Size.width, Position.y },
+			{ Position.x + Size.width, Position.y + Size.height },
+			{ Position.x, Position.y + Size.height }
+		};
+
+		BYTE PointTypes[] = {
+			PT_MOVETO,
+			PT_LINETO,
+			PT_LINETO,
+			PT_LINETO | PT_CLOSEFIGURE
+		};
+
+		PolyDraw(hdc, PointBuffer, PointTypes, ARRAYSIZE(PointBuffer));
+
+		SelectObject(hdc, PrevPen);
+		DeleteObject(StrokePen);
+
+	}
+
+	static void FillRectangle(HDC hdc, const VERTEX_2U &Position, const SIZE_2U &Size, const GdiBrush &dcBrush) noexcept {
+
+		HPEN InvisiblePen = CreatePen(PS_NULL, 1, 0x00000000);
+
+		HGDIOBJ PrevPen = SelectObject(hdc, InvisiblePen);
+		HGDIOBJ PrevBrush = SelectObject(hdc, dcBrush.Get());
+
+		POINT PointBuffer[] = {
+			{ Position.x, Position.y },
+			{ Position.x + Size.width, Position.y },
+			{ Position.x + Size.width, Position.y + Size.height },
+			{ Position.x, Position.y + Size.height }
+		};
+
+		Polygon(hdc, PointBuffer, ARRAYSIZE(PointBuffer));
+
+		SelectObject(hdc, PrevPen);
+		SelectObject(hdc, PrevBrush);
+
+		DeleteObject(InvisiblePen);
+		
+	}
+
+	template<size_t ArraySize>
+	static void FillGeometry(HDC hdc, const std::array<VERTEX_2U, ArraySize> &VertexBuffer, const GdiBrush &dcBrush) noexcept {
+
+		static_assert(ArraySize >= 2, "At Least TWO Vertices is Required");
+
+		HPEN InvisiblePen = CreatePen(PS_NULL, 1, 0x00000000);
+
+		HGDIOBJ PrevPen = SelectObject(hdc, InvisiblePen);
+		HGDIOBJ PrevBrush = SelectObject(hdc, dcBrush.Get());
+
+		POINT PointBuffer[ArraySize] = { 0 };
+
+		for (size_t i = 0; i < ArraySize; i++) {
+			PointBuffer[i].x = VertexBuffer[i].x;
+			PointBuffer[i].y = VertexBuffer[i].y;
+		}
+
+		Polygon(hdc, PointBuffer, ArraySize);
+
+		SelectObject(hdc, PrevPen);
+		SelectObject(hdc, PrevBrush);
+
+		DeleteObject(InvisiblePen);
+
+	}
+
+	/// <summary>This Function Draw Image From File with ".bmp" Extension or Application Resource</summary>
+	/// <param name="FileName">More Information is Located in "Mode" Parameter Anotation</param>
+	/// <param name="Mode"><para>LOAD_FROM_FILE - Load Image From File with ".bmp" Extension</para>
+	/// <para>LOAD_FROM_RESOURCE - Load Image From Resource - Use "MAKEINTRESOURCE" Macro</para>
+	/// <para>MONOCHROME - Load Monochrome Image (Black - White)</para></param>
+	static _Success_(return == 0) DWORD DrawImage( _In_ HDC hdc, _In_z_ LPCTSTR FileName, _In_ MODE Mode,
+		_In_ const VERTEX_2U &Position, const SIZE_2U &Size) noexcept {
+
+		SetLastError(0); // Set WINAPI Error To ZERO
 
 		HANDLE ImageBitmap = NULL;
+		HINSTANCE hInstance = GetModuleHandle(NULL);
 		
-		if (Type == 'f') {
-			ImageBitmap = LoadImageW(NULL, FileName.data(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE | LR_VGACOLOR); // # Load Image #
-		} else if (Type == 'r') {
-			HINSTANCE hInstance = GetModuleHandle(NULL);
-			ImageBitmap = LoadImageW(hInstance, FileName.data(), IMAGE_BITMAP, 0, 0, LR_VGACOLOR); // # Load Image Resource #
+		switch (Mode) {
+		//--------------------------------------------------------------------------------------------------
+		// Load Image From File
+		case MODE::LOAD_FROM_FILE:
+			ImageBitmap = LoadImage(NULL, FileName, IMAGE_BITMAP, Size.width, Size.height, LR_LOADFROMFILE | LR_VGACOLOR);
+			break;
+		case MODE::LOAD_FROM_FILE_MONOCHROME:
+			ImageBitmap = LoadImage(NULL, FileName, IMAGE_BITMAP, Size.width, Size.height, LR_LOADFROMFILE | LR_MONOCHROME);
+			break;
+		//--------------------------------------------------------------------------------------------------
+		// Load Image From Resource
+		case MODE::LOAD_FROM_RESOURCE:
+			ImageBitmap = LoadImage(hInstance, FileName, IMAGE_BITMAP, Size.width, Size.height, LR_VGACOLOR);
+			break;
+		case MODE::LOAD_FROM_RESOURCE_MONOCHROME:
+			ImageBitmap = LoadImage(hInstance, FileName, IMAGE_BITMAP, Size.width, Size.height, LR_MONOCHROME);
+			break;
+		//--------------------------------------------------------------------------------------------------
 		}
 
 		if (ImageBitmap == NULL) {
-			return false;
+			return GetLastError();
 		}
 
 		HDC BitmapDC = CreateCompatibleDC(hdc);
 
+		//--------------------------------------------------------------------------------------------------
+		// Draw Image
 		HGDIOBJ PrevBitmap = SelectObject(BitmapDC, ImageBitmap);
-		BitBlt(hdc, X, Y, Width, Height, BitmapDC, Width, Height, SRCCOPY); // # Draw Image #
+		BitBlt(hdc, Position.x, Position.y, Size.width, Size.height, BitmapDC, 0, 0, SRCCOPY);
 		SelectObject(BitmapDC, PrevBitmap);
+		//--------------------------------------------------------------------------------------------------
 
+		//--------------------------------------------------------------------------------------------------
+		// Cleanup Resources
 		DeleteDC(BitmapDC);
 		DeleteObject(ImageBitmap);
+		//--------------------------------------------------------------------------------------------------
 
-		return true;
-
-	}
-
-	#pragma endregion
-
-	
-	#pragma region FillFigures
-
-	static void FillRectangle(HDC hdc, const RECT &rect, ColorU FillColor = ColorU::Enum::DarkBlue) noexcept {
-
-		HBRUSH FillBrush = CreateSolidBrush(FillColor.get());
-		HGDIOBJ PrevBrush = SelectObject(hdc, FillBrush);
-
-		FillRect(hdc, &rect, FillBrush);
-		
-		SelectObject(hdc, PrevBrush);
-		DeleteObject(FillBrush);
-
-	}
-
-	static void FillRectangle(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, ColorU FillColor = ColorU::Enum::DarkBlue) noexcept {
-
-		HBRUSH FillBrush = CreateSolidBrush(FillColor.get());
-		HGDIOBJ PrevBrush = SelectObject(hdc, FillBrush);
-
-		RECT rect = { X, Y, X + Width, Y + Height };
-		FillRect(hdc, &rect, FillBrush);
-
-		SelectObject(hdc, PrevBrush);
-		DeleteObject(FillBrush);
+		return GetLastError();
 
 	}
 
 	template<size_t ArraySize>
 	static void FillGradientH(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, const std::array<ColorU, ArraySize> &ColorCollection) noexcept {
 
-		static_assert(ArraySize >= 2, "In \"ColorCollection\" Array Must Be Minimum TWO Colors");
+		static_assert(ArraySize >= 2, "At Least TWO Colors is Required");
 
 		HDC MemoryDC = CreateCompatibleDC(hdc);
 		HBITMAP Bitmap = CreateCompatibleBitmap(hdc, Width, Height);
@@ -340,16 +435,16 @@ struct GdiPlus {
 				
 				{
 					GradientBegin, 0,                         // X, Y
-					GetRValue(ColorCollection[i].get()) << 8, // Red
-					GetGValue(ColorCollection[i].get()) << 8, // Green
-					GetBValue(ColorCollection[i].get()) << 8  // Blue
+					GetRValue(ColorCollection[i].Get()) << 8, // Red
+					GetGValue(ColorCollection[i].Get()) << 8, // Green
+					GetBValue(ColorCollection[i].Get()) << 8  // Blue
 				},
 
 				{
-					GradientEnd, Height,                      // X, Y
-					GetRValue(ColorCollection[i + 1].get()) << 8, // Red
-					GetGValue(ColorCollection[i + 1].get()) << 8, // Green
-					GetBValue(ColorCollection[i + 1].get()) << 8  // Blue
+					GradientEnd, Height,                          // X, Y
+					GetRValue(ColorCollection[i + 1].Get()) << 8, // Red
+					GetGValue(ColorCollection[i + 1].Get()) << 8, // Green
+					GetBValue(ColorCollection[i + 1].Get()) << 8  // Blue
 				}
 
 				#pragma warning(default:4838)
@@ -376,7 +471,7 @@ struct GdiPlus {
 	template<size_t ArraySize>
 	static void FillGradientV(HDC hdc, INT32 X, INT32 Y, INT32 Width, INT32 Height, const std::array<ColorU, ArraySize> &ColorCollection) {
 
-		static_assert(ArraySize >= 2, "In \"ColorCollection\" Array Must Be Minimum TWO Colors");
+		static_assert(ArraySize >= 2, "At Least TWO Colors is Required");
 
 		HDC MemoryDC = CreateCompatibleDC(hdc);
 		HBITMAP Bitmap = CreateCompatibleBitmap(hdc, Width, Height);
@@ -397,16 +492,16 @@ struct GdiPlus {
 
 				{
 					0, GradientBegin,                         // X, Y
-					GetRValue(ColorCollection[i].get()) << 8, // Red
-					GetGValue(ColorCollection[i].get()) << 8, // Green
-					GetBValue(ColorCollection[i].get()) << 8  // Blue
+					GetRValue(ColorCollection[i].Get()) << 8, // Red
+					GetGValue(ColorCollection[i].Get()) << 8, // Green
+					GetBValue(ColorCollection[i].Get()) << 8  // Blue
 				},
 
 				{
 					Width, GradientEnd,                       // X, Y
-					GetRValue(ColorCollection[i + 1].get()) << 8, // Red
-					GetGValue(ColorCollection[i + 1].get()) << 8, // Green
-					GetBValue(ColorCollection[i + 1].get()) << 8  // Blue
+					GetRValue(ColorCollection[i + 1].Get()) << 8, // Red
+					GetGValue(ColorCollection[i + 1].Get()) << 8, // Green
+					GetBValue(ColorCollection[i + 1].Get()) << 8  // Blue
 				}
 
 				#pragma warning(default:4838)
@@ -429,7 +524,5 @@ struct GdiPlus {
 		DeleteObject(Bitmap);
 
 	}
-
-	#pragma endregion
 
 };

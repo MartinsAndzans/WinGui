@@ -1,7 +1,13 @@
 #pragma once
 
+#define WIN32_LEAN_AND_MEAN
+
+//===== HEADERS ======//
+#include <memory>
 #include <Windows.h>
+#include <vector>
 #include <string>
+//====================//
 
 //====================================//
 //                                    //
@@ -42,8 +48,10 @@
 // WORD		Reserved              //
 //================================//
 
+
+
 // # All Strings Must Be Null Terminated #
-struct DIALOG {
+struct DialogStyle {
 	DWORD ExtendedStyle; // * Extended Window Styles *
 	LPCWSTR Title; // * Dialog Title \ "NULL" - No Title *
 	DWORD Style; // * Window Styles *
@@ -55,7 +63,7 @@ struct DIALOG {
 };
 
 // # All Strings Must Be Null Terminated #
-struct ITEM {
+struct DialogItemStyle {
 	DWORD ExtendedStyle; // * Extended Window Styles *
 	LPCWSTR Title; // * Dialog Item Title \ "NULL" - No Title *
 	WORD Class; // * Dialog Item Class \ "0x0000" - Error *
@@ -67,29 +75,14 @@ struct ITEM {
 	DWORD Id; // * Dialog Item Id *
 };
 
-// # Dialog Template #
-struct DialogTemplate {
-	LPCWSTR Title;
-	WORD Width;
-	WORD Height;
-	WORD FontHeight;
-	WORD FontWeight;
-	LPCWSTR FontFamily;
-};
-
 class Dialog {
 public:
 
-	Dialog() : m_hDlgTemplate(nullptr), m_DlgTemplateSize(0) {
-		
-		m_DialogTitle = L"Dialog";
-		m_DiaogSize = { 400, 200 };
-		m_FontHeight = 20;
-		m_FontWeight = 0;
-		m_FontItalic = FALSE;
-		m_FontFamily = L"Segoe UI";
-
-	}
+	Dialog()
+		: m_Dlg({
+			
+		})
+	{ /*...*/ }
 
 	Dialog(const Dialog &other) {
 
@@ -99,30 +92,7 @@ public:
 
 private:
 
-	//=========== DIALOG ===========//
-	std::wstring m_DialogTitle;
-	SIZE m_DiaogSize;
-	WORD m_FontHeight;
-	WORD m_FontWeight;
-	BYTE m_FontItalic;
-	std::wstring m_FontFamily;
-	//==============================//
-	
-	LPVOID m_hDlgTemplate; // * Handle To Dialog Template *
-	SIZE_T m_DlgTemplateSize; // * Dialog Template Size In Bytes *
-
-};
-
-namespace Dlg {
-
-	template<size_t ItemCount>
-	/// <returns>Dialog Template Handle</returns>
-	HANDLE CreateDialogTemplate(const DIALOG &Dlg, const std::array<ITEM, ItemCount> &DlgItems);
-
-	/// <returns>Dialog Exit Code</returns>
-	INT_PTR ShowDialog(HWND hWndParent, HANDLE hDlgTemplate, DLGPROC DlgProc, LPVOID lpParam);
-	
-	/// <summary># Delete Dialog Template #</summary>
-	VOID DeleteDialogTemplate(HANDLE hDlgTemplate);
+	DialogStyle m_Dlg;
+	std::vector<DialogItemStyle> m_DlgItems;
 
 };

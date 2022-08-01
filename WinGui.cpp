@@ -11,7 +11,6 @@ bool WinGui::wCreateMainWindow(_In_ LPCWSTR WindowTitle, _In_ INT32 Width, _In_ 
 	
 	HINSTANCE hInstance = GetModuleHandle(NULL); // * Instance of Application *
 	constexpr wchar_t ClassName[] = L"DirectX 2D Window Class";
-	
 
 	//===== Create Main Window Class =====//
 	WNDCLASSEXW wcex = { 0 };
@@ -89,18 +88,32 @@ INT WinGui::wMainLoop(void) noexcept {
 
 }
 
-enum class Fade { out, in };
-static Fade state = Fade::out;
-static COLORREF Color = D2D1RGB(0, 0, 255);
+struct Component {
+	VERTEX_2F Position;
+	SIZE_2F Size;
+	FLOAT Rotation;
+};
+
+struct Clicks {
+	VERTEX_2F Center;
+	FLOAT Radius;
+};
 
 LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, LPARAM lParam) {
+
+	enum class Fade { out, in };
+	static Fade state = Fade::out;
+	static COLORREF Color = D2D1RGB(0, 0, 255);
+
+	static VERTEX_2F CursorPos;
+	static bool LMButtonPresed = false;
 
 	switch (Msg) {
 	case WM_CREATE:
 	{
 
 		try {
-			GraphicsDevice = std::make_unique<Direct2D1>(D2D1_FACTORY_TYPE_SINGLE_THREADED);
+			GraphicsDevice = std::make_unique<Direct2D1>(D2D1_FACTORY_TYPE_MULTI_THREADED);
 		} catch (std::runtime_error &e) {
 			MessageBoxA(hMainWindow, e.what(), "DirectX 2D Error", MB_ICONERROR);
 			return -1;
@@ -112,12 +125,8 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 		INT16 FrameRate = (INT16)(1000.0F / 60.0F);
 		SetTimer(hMainWindow, 0xFF, FrameRate, NULL);
 
-		SYSTEMTIME st = { 0 };
-		GetSystemTime(&st);
-		srand(st.wMilliseconds);
-
 		return 0;
-		
+
 	}
 	case WM_SIZE:
 	{
@@ -135,6 +144,12 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 
 		InvalidateRect(hMainWindow, NULL, FALSE);
 
+		return 0;
+	}
+	case WM_MOUSEMOVE:
+	{
+		CursorPos.x = LOWORD(lParam);
+		CursorPos.y = HIWORD(lParam);
 		return 0;
 	}
 	case WM_PAINT:
@@ -158,76 +173,108 @@ LRESULT CALLBACK WinGui::WindowProc(HWND hMainWindow, UINT Msg, WPARAM wParam, L
 			Color = D2D1RGB(D2D1GetRValue(Color), D2D1GetGValue(Color), D2D1GetBValue(Color) + 0x05);
 		}
 
-		POINT CursorPos = { 0 };
-		GetCursorPos(&CursorPos);
-		ScreenToClient(hMainWindow, &CursorPos);
+		static std::vector<Component> Stars;
+		static std::vector<Clicks> Clicks;
 
-		static std::vector<VERTEX_2F> Stars;
-		static std::vector<VERTEX_2F> Spawners;
-
-		/*for (size_t i = 0; i < 2; i++) {
-			Stars.push_back({ (FLOAT)(rand() % rect.right), -20.0F });
-		}*/
-
-		if (GetAsyncKeyState(VK_LBUTTON) && CursorPos.x >= rect.left && CursorPos.x <= rect.right &&
-			CursorPos.y >= rect.top && CursorPos.y <= rect.bottom &&
-			GetFocus() == hMainWindow) {
-			Stars.push_back({ (FLOAT)(CursorPos.x), (FLOAT)(CursorPos.y) });
+		if (LMButtonPresed) {
+			Clicks.push_back({ CursorPos, 80.0F });
 		}
 
-		if (GetAsyncKeyState(VK_RBUTTON) && CursorPos.x >= rect.left && CursorPos.x <= rect.right &&
-			CursorPos.y >= rect.top && CursorPos.y <= rect.bottom &&
-			GetFocus() == hMainWindow) {
-			Spawners.push_back({ (FLOAT)(CursorPos.x), (FLOAT)(CursorPos.y) });
-		}
-
-		if (GetAsyncKeyState(VK_SPACE) && GetFocus() == hMainWindow) {
-			Spawners.clear();
-		}
-
-		for (size_t i = 0; i < Spawners.size(); i++) {
-			printf_s("X: %.2f\tY: %.2f\n", Spawners[i].x, Spawners[i].y);
-			Stars.push_back({ Spawners[i].x, Spawners[i].y });
-		}
-
-		for (size_t i = 0; i < Stars.size(); i++) {
-
-			if (Stars[i].y >= rect.bottom) {
-				Stars.erase(Stars.begin() + i);
-				Stars.shrink_to_fit();
-				i--;
+		for (size_t i = 0; i < Clicks.size(); i++) {
+			
+			if (Clicks[i].Radius <= 0.0F) {
+				Clicks.erase(Clicks.begin() + i);
+				i -= 1;
 				continue;
 			}
 
-			switch (rand() % 2) {
-			case 0:
-				Stars[i].x += 10.0F;
-				break;
-			case 1:
-				Stars[i].x -= 10.0F;
-				break;
+			Clicks[i].Radius -= 2.0F;
+		
+		}
+
+		// # SPAWN #
+		for (size_t i = 0; i < 2; i++) {
+			if (Stars.size() <= 40) {
+				FLOAT Size = (FLOAT)(rand() % 41 + 10);
+				Stars.push_back({ { -20.0F, (FLOAT)(rand() % rect.bottom) }, { Size, Size }, 0.0F });
+			}
+		}
+
+		// # ANIMATION #
+		for (size_t i = 0; i < Stars.size(); i++) {
+
+			if (Stars[i].Position.x >= rect.right) {
+				Stars.erase(Stars.begin() + i);
+				Stars.shrink_to_fit();
+				i -= 1;
+				continue;
 			}
 
-			Stars[i].y += 10.0F;
+			// # SPEED #
+			if (Stars[i].Size.width <= 18) {
+				Stars[i].Position.x += 28.0F;
+			} else if (Stars[i].Size.width <= 28) {
+				Stars[i].Position.x += 18.0F;
+			} else {
+				Stars[i].Position.x += 8.0F;
+			}
+
+			// # ROTATION #
+			if (Stars[i].Rotation >= 360.0F) {
+				Stars[i].Rotation = 0.0F;
+			} else {
+				Stars[i].Rotation += (FLOAT)(rand() % 11 + 2);
+			}
 
 		}
 
-		GraphicsDevice->BeginDraw(WindowDC, rect, D2D1::ColorF(Color));
+		GraphicsDevice->BeginDraw(WindowDC, rect, D2D1::ColorF(D2D1RGB(0, 0, 0)));
 
 		for (size_t i = 0; i < Stars.size(); i++) {
-			D2D1_POINT_2F Point = { Stars[i].x, Stars[i].y};
-			GraphicsDevice->FillEllipse(Point, 4.0F, 4.0F, D2D1::ColorF(D2D1RGB(255, 255, 255)));
+
+			std::vector<VERTEX_2F> StarVertex;
+			StarVertex.reserve(5);
+			StarVertex.push_back({ Stars[i].Position.x, Stars[i].Position.y + Stars[i].Size.height });
+			StarVertex.push_back({ Stars[i].Position.x + Stars[i].Size.width / 2.0F, Stars[i].Position.y });
+			StarVertex.push_back({ Stars[i].Position.x + Stars[i].Size.width, Stars[i].Position.y + Stars[i].Size.height });
+			StarVertex.push_back({ Stars[i].Position.x, Stars[i].Position.y + Stars[i].Size.height / 3.0F });
+			StarVertex.push_back({ Stars[i].Position.x + Stars[i].Size.width, Stars[i].Position.y + Stars[i].Size.height / 3.0F });
+			
+			D2D1_MATRIX_3X2_F Rotate;
+			D2D1MakeRotateMatrix(Stars[i].Rotation, { Stars[i].Position.x + Stars[i].Size.width / 2.0F, Stars[i].Position.y + Stars[i].Size.height / 2.0F }, &Rotate);
+
+			GraphicsDevice->DrawGeometry(StarVertex, D2D1::ColorF(D2D1::ColorF::Enum::Yellow), 2.0F, &Rotate);
+
+		}
+
+		for (size_t i = 0; i < Clicks.size(); i++) {
+			GraphicsDevice->DrawEllipse(Clicks[i].Center, Clicks[i].Radius, Clicks[i].Radius, D2D1::ColorF(D2D1::ColorF::Enum::DarkOrange), 2.0F);
 		}
 
 		GraphicsDevice->EndDraw();
 
 		EndPaint(hMainWindow, &ps);
-		
+
 		return 0;
-	
+
+	}
+	case WM_LBUTTONDOWN:
+	{
+		LMButtonPresed = true;
+		return 0;
+	}
+	case WM_LBUTTONUP:
+	{
+		LMButtonPresed = false;
+		return 0;
 	}
 	case WM_KEYDOWN:
 	{
+
+		if (wParam == VK_ESCAPE) {
+			PostMessage(hMainWindow, WM_CLOSE, 0, 0);
+		}
+
 		return 0;
 	}
 	case WM_GETMINMAXINFO:

@@ -6,11 +6,15 @@
 *                                               *
 ************************************************/
 
+#define WIN32_LEAN_AND_MEAN
+
+//===== HEADERS ======//
 #include <memory>
 #include <Windows.h>
 #include <string>
 #include <sstream>
 #include <fstream>
+//====================//
 
 struct Algoritms {
 
@@ -18,7 +22,7 @@ struct Algoritms {
 	static constexpr uint64_t ReverseNumber(_In_ uint64_t Number) noexcept {
 
 		uint64_t ReversedNumber = 0;
-
+		
 		/* Reverse Number */
 		while (Number != 0) {
 			ReversedNumber *= 10; // # Add zero to "ReversedNumber" #
@@ -313,8 +317,8 @@ struct Algoritms {
 
 	}
 
-	// # This Function Show Last Error in -/MessageBox/- #
-	static void ShowLastError(_In_opt_ HWND hWndParent) noexcept {
+	// # This Function Get Last Error Message #
+	static std::string GetWINAPIErrorMessage(void) noexcept {
 
 		DWORD LastError = GetLastError(); // # Last Error #
 
@@ -329,16 +333,11 @@ struct Algoritms {
 			LastErrorMessage + 3, MAX_CHAR_STRING - 4, nullptr);
 		//============================================//
 
-		std::string MessageBoxTitle = "ERROR " + std::to_string(LastError);
-		std::string ErrorMessage = "Error Code: " + std::to_string(LastError);
-
 		if (Length == 0) {
-			ErrorMessage += " - Unknown Error";
+			return "Error Code: " + std::to_string(LastError) + " - Unknown Error";
 		} else {
-			ErrorMessage += LastErrorMessage;
+			return "Error Code: " + std::to_string(LastError) + LastErrorMessage;
 		}
-
-		MessageBoxA(hWndParent, ErrorMessage.c_str(), MessageBoxTitle.c_str(), MB_OK | MB_ICONERROR);
 
 	}
 

@@ -4,19 +4,19 @@ std::string GetHRESULTErrorMessage(HRESULT hResult) {
 
 	//=============== ERROR MESSAGE BUFFER ===============//
 	constexpr size_t MAX_CHAR_STRING = 256U;
-	CHAR HRESULTErrorMessage[MAX_CHAR_STRING] = { 0 };
+	CHAR HRESULTErrorMessage[MAX_CHAR_STRING] = { ' ', '-', ' ' };
 	//====================================================//
 
 	//=============== GET HRESULT ERROR MESSAGE ===============//
 	DWORD Length = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,
-		nullptr, HRESULT_CODE(hResult), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		HRESULTErrorMessage, MAX_CHAR_STRING - 1U, nullptr);
+		nullptr, hResult, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		HRESULTErrorMessage + 3, MAX_CHAR_STRING - 4, nullptr);
 	//=========================================================//
 
 	if (Length == 0) {
 		return "Error Code: " + std::to_string(HRESULT_CODE(hResult)) + " - Unknown Error";
 	} else {
-		return "Error Code: " + std::to_string(HRESULT_CODE(hResult)) + " - " + HRESULTErrorMessage;
+		return "Error Code: " + std::to_string(HRESULT_CODE(hResult)) + HRESULTErrorMessage;
 	}
 
 }
@@ -101,17 +101,37 @@ void Direct2D1::CreatePathGeometry(const std::vector<VERTEX_2F> &VertexBuffer, I
 	m_d2d1Factory->CreatePathGeometry(PathGeometry);
 	(*PathGeometry)->Open(d2d1GeometrySink.GetAddressOf());
 
-	for (size_t i = 0; i < VertexBuffer.size(); i++) {
-
-		if (i == 0) {
-			d2d1GeometrySink->BeginFigure({ VertexBuffer[i].x, VertexBuffer[i].y }, D2D1_FIGURE_BEGIN_FILLED);
-		} else {
-			d2d1GeometrySink->AddLine({ VertexBuffer[i].x, VertexBuffer[i].y });
+	switch (VertexBuffer.size()) {
+	case 0U: // ===== NOTHING =====
+		break;
+	case 1U: // ===== DOT =====
+		d2d1GeometrySink->BeginFigure({ VertexBuffer[0].x, VertexBuffer[0].y }, D2D1_FIGURE_BEGIN_HOLLOW);
+		d2d1GeometrySink->AddLine({ VertexBuffer[0].x, VertexBuffer[0].y });
+		d2d1GeometrySink->EndFigure(D2D1_FIGURE_END_OPEN);
+		break;
+	case 2U: // ===== LINE =====
+		d2d1GeometrySink->BeginFigure({ VertexBuffer[0].x, VertexBuffer[0].y }, D2D1_FIGURE_BEGIN_HOLLOW);
+		d2d1GeometrySink->AddLine({ VertexBuffer[1].x, VertexBuffer[1].y });
+		d2d1GeometrySink->EndFigure(D2D1_FIGURE_END_OPEN);
+		break;
+	default: // ===== OTHER GEOMETRY =====
+		
+		for (size_t i = 0; i < VertexBuffer.size(); i++) {
+			
+			if (i == 0) {
+				d2d1GeometrySink->BeginFigure({ VertexBuffer[i].x, VertexBuffer[i].y }, D2D1_FIGURE_BEGIN_FILLED);
+			} else {
+				d2d1GeometrySink->AddLine({ VertexBuffer[i].x, VertexBuffer[i].y });
+			}
+			
 		}
 
-	}
+		d2d1GeometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
+		
+		break;
 
-	d2d1GeometrySink->EndFigure(D2D1_FIGURE_END_CLOSED);
+	};
+
 	d2d1GeometrySink->Close();
 
 }
@@ -131,9 +151,10 @@ void Direct2D1::DrawGeometry(const std::vector<VERTEX_2F> &VertexBuffer, const D
 
 		m_dcSolidColorBrush->SetColor(Color);
 
-		D2D1_MATRIX_3X2_F PrevTransform = { 0 };
 
 		if (Transform != nullptr) {
+			
+			D2D1_MATRIX_3X2_F PrevTransform = { 0 };
 			
 			m_dcRenderTarget->GetTransform(&PrevTransform);
 			m_dcRenderTarget->SetTransform(Transform);
@@ -152,7 +173,8 @@ void Direct2D1::DrawGeometry(const std::vector<VERTEX_2F> &VertexBuffer, const D
 	
 }
 
-void Direct2D1::FillGeometry(const std::vector<VERTEX_2F> &VertexBuffer, const D2D1_COLOR_F &Color, const D2D1_MATRIX_3X2_F *Transform/*= nullptr*/) {
+void Direct2D1::FillGeometry(const std::vector<VERTEX_2F> &VertexBuffer, const D2D1_COLOR_F &Color,
+	const D2D1_MATRIX_3X2_F *Transform/*= nullptr*/) {
 
 	if (!VertexBuffer.empty()) {
 
@@ -166,10 +188,11 @@ void Direct2D1::FillGeometry(const std::vector<VERTEX_2F> &VertexBuffer, const D
 
 		m_dcSolidColorBrush->SetColor(Color);
 
-		D2D1_MATRIX_3X2_F PrevTransform = { 0 };
 
 		if (Transform != nullptr) {
 
+			D2D1_MATRIX_3X2_F PrevTransform = { 0 };
+			
 			m_dcRenderTarget->GetTransform(&PrevTransform);
 			m_dcRenderTarget->SetTransform(Transform);
 
@@ -187,13 +210,13 @@ void Direct2D1::FillGeometry(const std::vector<VERTEX_2F> &VertexBuffer, const D
 
 }
 
-void Direct2D1::DrawEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLOAT RadiusY, const D2D1_COLOR_F &Color,
+void Direct2D1::DrawEllipse(const VERTEX_2F &centerPoint, FLOAT RadiusX, FLOAT RadiusY, const D2D1_COLOR_F &Color,
 	FLOAT strokeWidth/*= 1.0F*/, const D2D1_MATRIX_3X2_F *Transform/*= nullptr*/) {
 
 	m_dcSolidColorBrush->SetColor(Color);
 
 	D2D1_ELLIPSE ellipse = {
-		.point = centerPoint,
+		.point = { centerPoint.x, centerPoint.y },
 		.radiusX = RadiusX,
 		.radiusY = RadiusY
 	};
@@ -202,6 +225,7 @@ void Direct2D1::DrawEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLO
 	if (Transform != nullptr) {
 		
 		D2D1_MATRIX_3X2_F PrevTransform = { 0 };
+		
 		m_dcRenderTarget->GetTransform(&PrevTransform);
 		m_dcRenderTarget->SetTransform(Transform);
 		
@@ -217,13 +241,13 @@ void Direct2D1::DrawEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLO
 
 }
 
-void Direct2D1::FillEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLOAT RadiusY, const D2D1_COLOR_F &Color,
+void Direct2D1::FillEllipse(const VERTEX_2F &centerPoint, FLOAT RadiusX, FLOAT RadiusY, const D2D1_COLOR_F &Color,
 	const D2D1_MATRIX_3X2_F *Transform/*= nullptr*/) {
 
 	m_dcSolidColorBrush->SetColor(Color);
 
 	D2D1_ELLIPSE ellipse = {
-		.point = centerPoint,
+		.point = { centerPoint.x, centerPoint.y },
 		.radiusX = RadiusX,
 		.radiusY = RadiusY
 	};
@@ -232,6 +256,7 @@ void Direct2D1::FillEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLO
 	if (Transform != nullptr) {
 
 		D2D1_MATRIX_3X2_F PrevTransform = { 0 };
+		
 		m_dcRenderTarget->GetTransform(&PrevTransform);
 		m_dcRenderTarget->SetTransform(Transform);
 
@@ -247,7 +272,8 @@ void Direct2D1::FillEllipse(const D2D1_POINT_2F &centerPoint, FLOAT RadiusX, FLO
 
 }
 
-void Direct2D1::DrawBitmap(D2D1_RECT_F Rect, const D2D1Bitmap &Bitmap, INT32 Frame/*= 0*/, const D2D1_MATRIX_3X2_F *Transform/*= nullptr*/) {
+void Direct2D1::DrawImage(const VERTEX_2F &Position, const SIZE_2F &Size, const D2D1Bitmap &Bitmap,
+	INT32 Frame/*= 0*/, const D2D1_MATRIX_3X2_F *Transform/*= nullptr*/) {
 
 
 

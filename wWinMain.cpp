@@ -15,6 +15,7 @@ INT WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	#endif
 
 	if (!WinGui::wCreateMainWindow(L"Window -SandBox-", 800, 600, nCmdShow)) {
+		MessageBoxA(HWND_DESKTOP, Algoritms::GetWINAPIErrorMessage().c_str(), "ERROR", MB_OK | MB_ICONERROR);
 		return EXIT_FAILURE;
 	}
 	

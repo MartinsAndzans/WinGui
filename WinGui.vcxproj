@@ -174,7 +174,7 @@
     <ClInclude Include="Console.h" />
     <ClInclude Include="Direct3D9.h" />
     <ClInclude Include="Direct2D1.h" />
-    <ClInclude Include="Dlg.h" />
+    <ClInclude Include="Dialog.h" />
     <ClInclude Include="Algoritms.h" />
     <ClInclude Include="GdiPlus.h" />
     <ClInclude Include="Mp3Player.h" />
@@ -184,7 +184,7 @@
   <ItemGroup>
     <ClCompile Include="Direct3D9.cpp" />
     <ClCompile Include="Direct2D1.cpp" />
-    <ClCompile Include="Dlg.cpp" />
+    <ClCompile Include="Dialog.cpp" />
     <ClCompile Include="WinGui.cpp" />
     <ClCompile Include="wWinMain.cpp" />
   </ItemGroup>
